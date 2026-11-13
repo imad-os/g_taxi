@@ -78,6 +78,7 @@ export class CityWorld {
         const B = net.bld;
         for (let o = 0; o < B.length;) { const n = B[o]; get(key(B[o + 3], B[o + 4])).blds.push(o); o += 3 + n * 2; }
         for (const s of net.stations) { const i = net.eOff[s.e] + s.k; get(key(net.px[i], net.pz[i])).st.push(s); }
+        this.getChunk = get;
         // traffic light heads: one per street arriving at a junction with lights
         this.heads = [];
         const q = {};
@@ -87,9 +88,19 @@ export class CityWorld {
                 const e = es[k];
                 const atB = net.eB[e] === j;
                 if (net.eOne[e] && !atB) continue;                      // one-way street leaving the junction: nobody arrives
-                const s = atB ? net.eLen[e] - net.jr[j] - 1.5 : net.jr[j] + 1.5;
+                // the pole stands on the right-hand pavement before the junction: the first spot clear of every
+                // street (a crossing street or the other half of a dual carriageway can cover the obvious one)
                 const right = atB ? -1 : 1, hw = net.eHw[e];
-                net.at(e, s, right * (hw + 0.7), q);
+                let ok = false;
+                for (let back = 1.5; back <= 13.5 && !ok; back += 2) {
+                    const s = atB ? net.eLen[e] - net.jr[j] - back : net.jr[j] + back;
+                    if (s < 0 || s > net.eLen[e]) break;
+                    for (let dd = 0.7; dd <= 2.9 && !ok; dd += 0.55) {
+                        net.at(e, s, right * (hw + dd), q);
+                        if (Math.hypot(q.x - net.jx[j], q.z - net.jz[j]) > net.jr[j] + 0.4 && this.clear(q.x, q.z, 0.45, true)) ok = true;
+                    }
+                }
+                if (!ok) continue;                                      // nowhere to stand: this head has no pole
                 const fx = atB ? q.fx : -q.fx, fz = atB ? q.fz : -q.fz;   // travel direction of the arriving cars
                 const h = { L, ph: li.ph[k], x: q.x, y: q.y + 0.15, z: q.z, fx, fz };
                 this.heads.push(h);
@@ -161,6 +172,11 @@ export class CityWorld {
         }
         this.buildMs = performance.now() - t0;
     }
+    // speed cameras and police officers (Enforce): drawn with the square they stand in
+    addEnforce(enf) {
+        for (const c of enf.cams) { const k = this.getChunk(this.key(c.x, c.z)); (k.cams || (k.cams = [])).push(c); }
+        for (const p of enf.police) { const k = this.getChunk(this.key(p.x, p.z)); (k.cops || (k.cops = [])).push(p); }
+    }
     emptyChunk(i, j) {   // squares with no road still get their ground
         const k = i * 1000 + j + 500500;
         const c = { k, segs: [], blds: [], heads: [], st: [], jn: [], built: null };
@@ -220,6 +236,31 @@ export class CityWorld {
             const ax = h.fz, az = -h.fx;       // across the street
             core.box(h.x, h.y, h.z, 0.07, 3.4, 0.07, ax, az, 70, 72, 76);
             core.box(h.x - h.fx * 0.05, h.y + 3.3, h.z - h.fz * 0.05, 0.2, 0.95, 0.12, ax, az, 30, 30, 32);
+        }
+        // ---- speed cameras: a grey pole and a box looking at the traffic, a yellow band
+        for (const m of c.cams || []) {
+            const fx = Math.sin(m.yaw), fz = Math.cos(m.yaw), ax = fz, az = -fx;
+            core.box(m.x, m.y, m.z, 0.06, 2.7, 0.06, ax, az, 120, 124, 128);
+            core.box(m.x, m.y + 2.55, m.z, 0.28, 0.6, 0.3, ax, az, 200, 204, 208);
+            core.box(m.x, m.y + 2.62, m.z, 0.29, 0.12, 0.31, ax, az, 240, 196, 24);
+            core.box(m.x + fx * 0.31, m.y + 2.82, m.z + fz * 0.31, 0.1, 0.18, 0.02, ax, az, 20, 22, 26);
+        }
+        // ---- police: an officer on the pavement facing the street, the patrol car parked behind on the kerb side
+        for (const p of c.cops || []) {
+            const fx = Math.sin(p.yaw), fz = Math.cos(p.yaw), ax = fz, az = -fx;
+            const N = [22, 34, 70], S = [190, 140, 105];
+            core.box(p.x + ax * 0.1, p.y, p.z + az * 0.1, 0.08, 0.9, 0.1, ax, az, ...N);
+            core.box(p.x - ax * 0.1, p.y, p.z - az * 0.1, 0.08, 0.9, 0.1, ax, az, ...N);
+            core.box(p.x, p.y + 0.9, p.z, 0.23, 0.62, 0.14, ax, az, ...N);
+            core.box(p.x + ax * 0.08, p.y + 1.3, p.z + az * 0.08 + 0, 0.05, 0.12, 0.15, ax, az, 245, 245, 245);    // white belt strap
+            core.box(p.x, p.y + 1.52, p.z, 0.11, 0.24, 0.11, ax, az, ...S);
+            core.box(p.x, p.y + 1.74, p.z, 0.14, 0.08, 0.15, ax, az, 245, 245, 245);                          // white cap
+            core.box(p.x + ax * 0.31, p.y + 0.95, p.z + az * 0.31, 0.06, 0.55, 0.06, ax, az, ...N);
+            core.box(p.x - ax * 0.31, p.y + 0.95, p.z - az * 0.31, 0.06, 0.55, 0.06, ax, az, ...N);
+            core.box(p.x + ax * 0.31, p.y + 0.85, p.z + az * 0.31, 0.06, 0.1, 0.06, ax, az, 250, 250, 250);   // white gloves
+            core.box(p.x - ax * 0.31, p.y + 0.85, p.z - az * 0.31, 0.06, 0.1, 0.06, ax, az, 250, 250, 250);
+            const cx = p.x - fx * 0.4 + ax * 5.5, cz = p.z - fz * 0.4 + az * 5.5, yaw = Math.atan2(ax, az);   // along the pavement
+            for (const part of ['body', 'wfl', 'wfr', 'wbl', 'wbr']) detail.model('car_police', part, cx, p.y, cz, yaw, 1);
         }
         // ---- fuel stations: canopy over the pavement and the right lane, pumps, a tall sign
         for (const s of c.st) this.station(core, detail, s);
@@ -294,9 +335,14 @@ export class CityWorld {
     }
 
     // nothing drivable within m metres of (x, z): no street's asphalt, no junction
-    clear(x, z, m) {
+    // (nearJ: a spot near a junction is fine as long as it is off every street's asphalt)
+    clear(x, z, m, nearJ) {
         const q = this.net.query(x, z, -1, this.cq || (this.cq = {}));
-        return q.edge < 0 || (Math.abs(q.d) - q.hl >= m && q.junc < 0);
+        if (q.edge < 0) return true;
+        if (Math.abs(q.d) - q.hl < m) return false;
+        if (q.junc < 0) return true;
+        const n = this.net, J = q.junc;
+        return !!nearJ && Math.hypot(x - n.jx[J], z - n.jz[J]) > n.jr[J] + m;
     }
 
     station(core, detail, s) {

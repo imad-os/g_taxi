@@ -36,26 +36,33 @@ export class People {
                 [-0.3, 0.88, -0.07, -0.22, 1.42, 0.07, c[0]], [-0.11, 1.46, -0.11, 0.11, 1.72, 0.11, sk], [-0.12, 1.68, -0.12, 0.12, 1.76, 0.12, [40, 30, 25]]]);
         });
         this.arms = CLOTHES.map((c, k) => geo([[-0.04, -0.55, -0.07, 0.04, 0.02, 0.07, c[0]], [-0.045, -0.68, -0.06, 0.045, -0.55, 0.06, SKIN[k % SKIN.length]]]));
+        // the green arrow over a passenger waiting for a taxi (unlit, seen from afar: it grows with the distance)
+        this.arrowGeo = new THREE.ConeGeometry(0.32, 0.75, 4); this.arrowGeo.rotateX(Math.PI); this.arrowGeo.translate(0, 0.375, 0);
+        this.arrowMat = new THREE.MeshBasicMaterial({ color: 0x2cff8f, fog: false });
         this.pool = [];
         for (let k = 0; k < max; k++) {
             const g = new THREE.Group();
             const body = new THREE.Mesh(this.bodies[k % this.bodies.length], this.mat);
             const arm = new THREE.Mesh(this.arms[k % this.arms.length], this.mat);
             arm.position.set(0.26, 1.42, 0);
-            g.add(body); g.add(arm); g.visible = false;
+            const arrow = new THREE.Mesh(this.arrowGeo, this.arrowMat); arrow.visible = false;
+            g.add(body); g.add(arm); g.add(arrow); g.visible = false;
             scene.add(g);
-            this.pool.push({ g, body, arm });
+            this.pool.push({ g, body, arm, arrow });
         }
     }
     // peds: the passengers' list (first), more: walkers (any left-over figures)
     update(dt, peds, more, camPos) {
         for (let k = 0; k < this.pool.length; k++) {
             const P = this.pool[k], p = k < peds.length ? peds[k] : more[k - peds.length];
-            if (!p || p.state === 'in' || p.state === 'gone' || p.live === false || Math.hypot(p.x - camPos.x, p.z - camPos.z) > 260) { P.g.visible = false; continue; }
+            const dist = p ? Math.hypot(p.x - camPos.x, p.z - camPos.z) : 1e9;
+            if (!p || p.state === 'in' || p.state === 'gone' || p.live === false || dist > (p.state === 'wait' ? 420 : 260)) { P.g.visible = false; continue; }
             P.g.visible = true;
             if (P.body.geometry !== this.bodies[p.kind]) { P.body.geometry = this.bodies[p.kind]; P.arm.geometry = this.arms[p.kind]; }
             P.g.position.set(p.x, p.y, p.z);
             P.g.rotation.y = p.yaw;
+            P.arrow.visible = p.state === 'wait';
+            if (P.arrow.visible) { const k = Math.max(1, dist / 22); P.arrow.scale.setScalar(k); P.arrow.position.y = 2.1 + 0.25 * k + Math.abs(Math.sin(p.t * 3)) * 0.35 * k; P.arrow.rotation.y = p.t * 1.5; }
             if (p.state === 'wait') { P.arm.rotation.z = Math.PI * 0.85 + Math.sin(p.t * 7) * 0.25; P.arm.rotation.x = 0; }   // raised, waving
             else { P.arm.rotation.z = 0.1; P.arm.rotation.x = Math.sin(p.t * 8) * 0.5; }                                     // walking swing
             P.body.position.y = p.state === 'wait' ? 0 : Math.abs(Math.sin(p.t * 8)) * 0.04;
@@ -64,6 +71,7 @@ export class People {
     dispose() {
         for (const P of this.pool) this.scene.remove(P.g);
         for (const g of this.bodies.concat(this.arms)) g.dispose();
+        this.arrowGeo.dispose(); this.arrowMat.dispose();
         this.mat.dispose();
     }
 }

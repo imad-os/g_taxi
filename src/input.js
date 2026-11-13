@@ -14,6 +14,8 @@ export class Input {
         this.ctl = { steer: 0, throttle: 0, brake: 0, handbrake: 0, clutch: 0 };
         this.edge = { action: 0, up: 0, down: 0, camera: 0, map: 0 };
         this.prev = {};
+        this.hit = new Uint8Array(24);   // pressed since the last poll (a tap shorter than a frame still counts)
+        this.actHit = {};
         this.menuCb = null;
         this.dead = 0.14;
         this.steerNow = 0;
@@ -22,10 +24,10 @@ export class Input {
     onAction(action, pressed, repeat, dev) {
         if (repeat) { if (this.menuCb) this.menuCb(action, dev, true); return; }
         const pad = dev && dev.indexOf('pad') === 0;
-        if (!pad) (this.acts[dev] || (this.acts[dev] = {}))[action] = pressed;
+        if (!pad) { (this.acts[dev] || (this.acts[dev] = {}))[action] = pressed; if (pressed) this.actHit[action] = 1; }
         if (pressed && this.menuCb) this.menuCb(action, dev, false);
     }
-    onButton(i, pressed, value, dev) { this.pad(dev).b[i] = pressed ? Math.max(0.01, value || 1) : 0; }
+    onButton(i, pressed, value, dev) { this.pad(dev).b[i] = pressed ? Math.max(0.01, value || 1) : 0; if (pressed && i < 24) this.hit[i] = 1; }
     onAxes(axes, dev) { const p = this.pad(dev); for (let k = 0; k < 4 && k < axes.length; k++) p.a[k] = axes[k]; }
     btn(i) { let v = 0; for (const d in this.pads) { const x = this.pads[d].b[i]; if (x > v) v = x; } return v; }
     axis(k) { let v = 0; for (const d in this.pads) { const x = this.pads[d].a[k]; if (Math.abs(x) > Math.abs(v)) v = x; } return v; }
@@ -47,14 +49,18 @@ export class Input {
         const cl = this.btn(BTN.X);
         c.clutch = cl > 0.02 && cl < 0.98 ? cl : cl >= 0.98 ? 1 : Math.max(0, c.clutch - dt / 0.9);
         const e = this.edge;
-        e.action = this.rise('action', this.btn(BTN.A) > 0.3 || this.act('jump'));
-        e.camera = this.rise('camera', this.btn(BTN.Y) > 0.3);
-        e.up = this.rise('up', this.btn(BTN.UP) > 0.3);
-        e.down = this.rise('down', this.btn(BTN.DOWN) > 0.3);
-        e.gearUp = this.rise('gu', this.btn(BTN.R) > 0.3);
-        e.gearDown = this.rise('gd', this.btn(BTN.L) > 0.3);
-        e.map = this.rise('map', this.btn(BTN.MINUS) > 0.3);
+        // a press that came and went since the last poll (a tap shorter than a frame) is still one press
+        const H = this.hit;
+        const tap = (name, held, hit) => { const r = held ? (!this.prev[name] || hit ? 1 : 0) : (hit ? 1 : 0); this.prev[name] = held; return r; };
+        e.action = tap('action', this.btn(BTN.A) > 0.3 || !!this.act('jump'), H[BTN.A] === 1 || this.actHit.jump === 1);
+        e.camera = tap('camera', this.btn(BTN.Y) > 0.3, H[BTN.Y] === 1);
+        e.up = tap('up', this.btn(BTN.UP) > 0.3, H[BTN.UP] === 1);
+        e.down = tap('down', this.btn(BTN.DOWN) > 0.3, H[BTN.DOWN] === 1);
+        e.gearUp = tap('gu', this.btn(BTN.R) > 0.3, H[BTN.R] === 1);
+        e.gearDown = tap('gd', this.btn(BTN.L) > 0.3, H[BTN.L] === 1);
+        e.map = tap('map', this.btn(BTN.MINUS) > 0.3, H[BTN.MINUS] === 1);
+        H.fill(0); this.actHit = {};
     }
-    clearHeld() { for (const d in this.acts) this.acts[d] = {}; for (const d in this.pads) { this.pads[d].b.fill(0); this.pads[d].a.fill(0); } this.prev = {}; }
+    clearHeld() { this.hit.fill(0); this.actHit = {}; for (const d in this.acts) this.acts[d] = {}; for (const d in this.pads) { this.pads[d].b.fill(0); this.pads[d].a.fill(0); } this.prev = {}; }
     hasPad() { for (const d in this.pads) return true; return false; }
 }

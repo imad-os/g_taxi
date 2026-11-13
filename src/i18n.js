@@ -19,6 +19,11 @@ const S = {
         ctlGear: 'Manual gearbox: R gear up · L gear down · X clutch (hold)', ctlRemote: 'TV remote: ◀ ▶ steer · ▲ accelerate · ▼ brake · OK action · Back pause',
         rules: 'Rules of the road', rulesText: 'Respect the speed limit on the sign, stop at red lights, never drive up a one-way street the wrong way and stay off the pavement: the police fine you. Every accident is assessed: when it is your fault you pay the repairs, the other car and a fine.',
         stats: 'Shift so far', earned: 'Earned', fines: 'Fines', repairs: 'Repairs', fuelSpent: 'Fuel', km: 'km driven', best: 'Best fare',
+        fare: 'Fare',
+        camSpeed: 'Speed camera: {0}', policeSpeed: 'Police check: {0}', seenPolice: 'Seen by the police', fine_ped: 'Accident: you hit a pedestrian', pedHurt: 'Injuries (compensation)',
+        passengerHurt: 'Your passenger was hurt (compensation)', pickupTo: 'Pick up · to {0} · {1} km · {2} DH', fareKm: 'Fare, {0} km', car: 'Car', car_taxi: 'Petit taxi', car_city: 'Kasbah City', car_hatch: 'Medina Hatch',
+        reset: 'Start over', resetAsk: 'Start over with 300 DH, a quarter tank and a clean record?', yes: 'Yes, start over', no: 'No', resetDone: 'A fresh start: 300 DH',
+        camAhead: 'Speed camera', police: 'Police',
         credits: 'Streets and buildings © OpenStreetMap contributors (ODbL). Heights: AWS Terrain Tiles. Models and sounds: Kenney (CC0).'
     },
     fr: {
@@ -40,6 +45,11 @@ const S = {
         ctlGear: 'Boîte manuelle : R monter · L descendre · X embrayage (maintenir)', ctlRemote: 'Télécommande : ◀ ▶ diriger · ▲ accélérer · ▼ freiner · OK action · Retour pause',
         rules: 'Code de la route', rulesText: 'Respectez la limite du panneau, arrêtez-vous au feu rouge, ne prenez jamais un sens interdit et ne roulez pas sur le trottoir : la police verbalise. Chaque accident est expertisé : si c\'est votre faute, vous payez les réparations, l\'autre voiture et une amende.',
         stats: 'Service en cours', earned: 'Gagné', fines: 'Amendes', repairs: 'Réparations', fuelSpent: 'Carburant', km: 'km parcourus', best: 'Meilleure course',
+        fare: 'Course',
+        camSpeed: 'Radar : {0}', policeSpeed: 'Contrôle de police : {0}', seenPolice: 'Vu par la police', fine_ped: 'Accident : vous avez renversé un piéton', pedHurt: 'Blessures (indemnisation)',
+        passengerHurt: 'Votre client a été blessé (indemnisation)', pickupTo: 'Prendre · vers {0} · {1} km · {2} DH', fareKm: 'Course, {0} km', car: 'Voiture', car_taxi: 'Petit taxi', car_city: 'Kasbah City', car_hatch: 'Medina Hatch',
+        reset: 'Recommencer', resetAsk: 'Recommencer avec 300 DH, un quart de réservoir et un dossier vierge ?', yes: 'Oui, recommencer', no: 'Non', resetDone: 'Nouveau départ : 300 DH',
+        camAhead: 'Radar', police: 'Police',
         credits: 'Rues et bâtiments © contributeurs OpenStreetMap (ODbL). Relief : AWS Terrain Tiles. Modèles et sons : Kenney (CC0).'
     },
     es: {
@@ -61,6 +71,11 @@ const S = {
         ctlGear: 'Cambio manual: R subir · L bajar · X embrague (mantener)', ctlRemote: 'Mando de la tele: ◀ ▶ girar · ▲ acelerar · ▼ frenar · OK acción · Atrás pausa',
         rules: 'Normas de tráfico', rulesText: 'Respeta el límite de la señal, para en rojo, nunca entres en dirección prohibida y no circules por la acera: la policía multa. Cada accidente se peritan: si es culpa tuya pagas las reparaciones, el otro coche y una multa.',
         stats: 'Turno actual', earned: 'Ganado', fines: 'Multas', repairs: 'Reparaciones', fuelSpent: 'Combustible', km: 'km recorridos', best: 'Mejor carrera',
+        fare: 'Tarifa',
+        camSpeed: 'Radar: {0}', policeSpeed: 'Control policial: {0}', seenPolice: 'Visto por la policía', fine_ped: 'Accidente: atropellaste a un peatón', pedHurt: 'Heridas (indemnización)',
+        passengerHurt: 'Tu pasajero resultó herido (indemnización)', pickupTo: 'Recoger · a {0} · {1} km · {2} DH', fareKm: 'Carrera, {0} km', car: 'Coche', car_taxi: 'Petit taxi', car_city: 'Kasbah City', car_hatch: 'Medina Hatch',
+        reset: 'Empezar de nuevo', resetAsk: '¿Empezar de nuevo con 300 DH, un cuarto de depósito y el historial limpio?', yes: 'Sí, empezar de nuevo', no: 'No', resetDone: 'Nuevo comienzo: 300 DH',
+        camAhead: 'Radar', police: 'Policía',
         credits: 'Calles y edificios © colaboradores de OpenStreetMap (ODbL). Relieve: AWS Terrain Tiles. Modelos y sonidos: Kenney (CC0).'
     },
     ar: {
@@ -82,6 +97,11 @@ const S = {
         ctlGear: 'علبة يدوية: R رفع السرعة · L خفضها · X القابض (اضغط مطولاً)', ctlRemote: 'جهاز التحكم: ◀ ▶ توجيه · ▲ تسارع · ▼ فرامل · OK إجراء · رجوع إيقاف',
         rules: 'قانون السير', rulesText: 'احترم حد السرعة في اللوحة، وتوقف عند الضوء الأحمر، ولا تدخل شارعاً ممنوعاً، ولا تسِر على الرصيف: الشرطة تحرر المخالفات. كل حادث يُقيَّم: إذا كان خطأك تدفع الإصلاح والسيارة الأخرى ومخالفة.',
         stats: 'حصيلة العمل', earned: 'المداخيل', fines: 'المخالفات', repairs: 'الإصلاحات', fuelSpent: 'الوقود', km: 'كم مقطوعة', best: 'أفضل رحلة',
+        fare: 'الأجرة',
+        camSpeed: 'رادار: {0}', policeSpeed: 'مراقبة الشرطة: {0}', seenPolice: 'رصدتك الشرطة', fine_ped: 'حادثة: صدمت راجلاً', pedHurt: 'إصابات (تعويض)',
+        passengerHurt: 'أصيب زبونك (تعويض)', pickupTo: 'أركب · إلى {0} · {1} كلم · {2} درهم', fareKm: 'الأجرة، {0} كلم', car: 'السيارة', car_taxi: 'طاكسي صغير', car_city: 'Kasbah City', car_hatch: 'Medina Hatch',
+        reset: 'ابدأ من جديد', resetAsk: 'البدء من جديد بـ 300 درهم وربع خزان وسجل نظيف؟', yes: 'نعم، ابدأ من جديد', no: 'لا', resetDone: 'بداية جديدة: 300 درهم',
+        camAhead: 'رادار', police: 'الشرطة',
         credits: 'الشوارع والمباني © مساهمو OpenStreetMap (ODbL). التضاريس: AWS Terrain Tiles. النماذج والأصوات: Kenney (CC0).'
     }
 };

@@ -59,15 +59,29 @@ const lastEvents = P => P.evaluate(() => window.TT.shift.taxi.log.slice(-4).map(
     check(t.stats.rides === 1 && t.money > 300, 'ride paid', { rides: t.stats.rides, money: t.money });
     await P.screenshot({ path: out + '/2-paid.png' });
 
-    // speeding: this street's limit set to 20 km/h, drive at ~45
+    // speeding with nobody watching: no fine (limit 20 km/h everywhere, no camera, no police)
     const m0 = t.money;
-    await P.evaluate(() => { const S = window.TT.shift; S.net.eLim.fill(20); });
+    await P.evaluate(() => { const S = window.TT.shift, E = S.enforce; S.net.eLim.fill(20); E._c = E.cams; E._p = E.police; E.cams = []; E.police = []; });
     await pad(7, 0.7);
-    for (let k = 0; k < 14; k++) { await P.waitForTimeout(700); if ((await taxiOf(P)).stats.fines > 0) break; }
+    await P.waitForTimeout(5000);
     t = await taxiOf(P);
-    check(t.stats.fines > 0 && t.money < m0, 'speeding fine', { kmh: t.kmh, fines: t.stats.fines, money: t.money });
-    await P.screenshot({ path: out + '/3-speeding.png' });
+    check(t.stats.fines === 0, 'speeding unseen: no fine', { kmh: t.kmh, fines: t.stats.fines });
+    await pad(7, 0); await pad(6, 1); await P.waitForTimeout(1500); await pad(6, 0);
+    // a speed camera: the taxi 40 m before it, full throttle past it
+    await P.evaluate(() => {
+        const S = window.TT.shift, E = S.enforce, n = S.net, v = S.me.veh; E.cams = E._c; E.police = E._p;
+        const c = E.cams.find(c => n.eLen[c.e] > 200 && c.s > 60 && c.s < n.eLen[c.e] - 30);
+        const o = n.at(c.e, c.s - c.dir * 40, -c.dir * n.eHw[c.e] * 0.45, {});
+        v.setPose(o.x, o.y + v.cgY + 0.45, o.z, Math.atan2(o.fx * c.dir, o.fz * c.dir)); S.city.stream(v.px, v.pz, 1e9, true);
+        S.taxi.camE = -1; window._cam = c;
+    });
+    await P.waitForTimeout(600);
+    await pad(7, 1);
+    for (let k = 0; k < 16; k++) { await P.waitForTimeout(500); if ((await taxiOf(P)).stats.fines > 0) break; }
     await pad(7, 0);
+    t = await taxiOf(P);
+    check(t.stats.fines > 0 && t.money < m0, 'speed camera fine', { kmh: t.kmh, fines: t.stats.fines, money: t.money });
+    await P.screenshot({ path: out + '/3-speed-camera.png' });
 
     // a crash into a wall at 40 km/h (the taxi's fault)
     const r0 = t.stats.repairs;

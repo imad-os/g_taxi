@@ -12,11 +12,17 @@ import { Traffic, lightState } from './traffic.js';
 import { Taxi } from './taxi.js';
 import { People } from './people.js';
 import { Walkers } from './walkers.js';
+import { Enforce } from './enforce.js';
 
 // the petit taxi: a 1.5 l diesel city saloon (real numbers: 66 kW, 200 Nm, 5 gears), Tangier's turquoise
 SPECS.taxi = { model: 'tr_taxi', cls: 'T', mass: 1180, power: 66, torque: 200, rpm: 4600, gears: [3.73, 2.05, 1.32, 0.97, 0.76], final: 4.21,
     cda: 0.68, cl: 0, mu: 1.0, steer: 0.62, nitro: 0, drive: 'f', turbo: 1, cyl: 4, diesel: 1, shift: 0.4 };
 export const TAXI_PAINT = 0x1aa3c4, TAXI_ROOF = 0xf2c418;
+// the cars a driver can pick (all in petit-taxi colours): the classic taxi, and two everyday cars of Tangier Asphalt
+export const CARS = ['taxi', 'city', 'hatch'];
+SPECS.taxi_city = Object.assign({}, SPECS.city, { cls: 'T', nitro: 0 });
+SPECS.taxi_hatch = Object.assign({}, SPECS.hatch, { cls: 'T', nitro: 0 });
+const specOf = car => car === 'city' ? SPECS.taxi_city : car === 'hatch' ? SPECS.taxi_hatch : SPECS.taxi;
 
 export function setDay() {
     U.uSun.value.set(0.45, 0.75, -0.48).normalize(); U.uSunCol.value.setRGB(1.0, 0.95, 0.86);
@@ -37,7 +43,7 @@ export class Shift {
         this.city = new CityWorld(this.scene, net, quality);
         this.city.reach = far + 60;
         // the taxi
-        const spec = SPECS.taxi;
+        const spec = specOf(opts.car);
         this.me = { veh: new Vehicle(spec, carDims(spec.model), opts.upgrades), spec, player: 0, wreck: 0, traffic: false, active: true };
         this.me.view = new CarView(this.scene, spec.model, TAXI_PAINT, TAXI_ROOF);
         const v = this.me.veh;
@@ -46,11 +52,12 @@ export class Shift {
         this.q = {}; this.qp = {};
         this.taxi = new Taxi(net, opts.saved);
         this.taxi.lang = opts.lang;
+        this.enforce = new Enforce(net); this.taxi.enf = this.enforce; this.city.addEnforce(this.enforce);
         this.start(opts.start);
         this.traffic = new Traffic(this.scene, net, quality.tier === 'low' ? 9 : 13);
         this.all = [this.me].concat(this.traffic.cars);
         this.walkers = new Walkers(net, quality.tier === 'low' ? 8 : 16);
-        this.people = new People(this.scene, 8 + this.walkers.list.length);
+        this.people = new People(this.scene, 10 + this.walkers.list.length);
         this.cam = new ChaseCam(16 / 9, far + 60);
         this.cam.shakeOn = quality.tier !== 'low';
         this.fx = new FX(this.scene, quality.tier, carMaterial(0x888888));
@@ -88,6 +95,18 @@ export class Shift {
         const v = this.me.veh;
         v.setPose(a.x, a.y + v.cgY + 0.45, a.z, Math.atan2(a.fx, a.fz));
         void q;
+    }
+
+    // people on foot in the taxi's way (walkers, waiting passengers): a hit is always paid for
+    pedHits(v, taxi) {
+        const R = v.R, chk = (p) => {
+            const dx = p.x - v.px, dz = p.z - v.pz;
+            if (dx * dx + dz * dz > 16) return false;
+            return Math.abs(dx * R[0] + dz * R[2]) < 1.1 && Math.abs(dx * R[6] + dz * R[8]) < 2.5 && Math.abs(p.y - v.py) < 2.5;
+        };
+        const kmh = Math.abs(v.fwdSpeed) * 3.6;
+        for (const p of this.walkers.list) if (p.live && chk(p)) { p.live = false; p.wait = 6; taxi.hitPed(kmh); this.onSound && this.onSound('hit', this.me, 5); }
+        for (const p of taxi.peds) if (p.state === 'wait' && chk(p)) { p.state = 'gone'; taxi.hitPed(kmh); this.onSound && this.onSound('hit', this.me, 5); }
     }
 
     // per 60 Hz tick
@@ -146,6 +165,7 @@ export class Shift {
         }
         fx.update(dt);
         this.walkers.update(dt, v.px, v.pz, Math.atan2(v.R[6], v.R[8]));
+        if (Math.abs(v.fwdSpeed) > 1.5) this.pedHits(v, taxi);
         this.people.update(dt, taxi.peds, this.walkers.list, this.cam.cam.position);
         this.cam.update(dt, me);
         // beacon over the destination

@@ -42,6 +42,13 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - Code: `src/net.js` (the network: query under a car, routes with one-way rules), `src/city.js` (streamed 200 m chunks,
   merged meshes), `src/traffic.js` (AI cars, lights), `src/taxi.js` (money, fares, fines, accidents, fuel, passengers; pure
   logic), `src/game.js` (the shift), `src/hud.js`, `src/ui.js`, `src/input.js`, `src/main.js` (My PC lifecycle).
+- Passengers (owner asks 2026-11-13): ~6 wait around the taxi (mostly ahead) with a green arrow over the head; each has
+  a destination; stopping by one quotes the trip (route length -> price) on the A prompt; the fare is fixed at pick-up.
+- Who fines (owner rule 2026-11-13, `src/enforce.js`): speeding only at a speed camera (as the taxi passes it) or in view
+  of a police officer (90 m); red light, wrong way and pavement only in view of an officer; hitting a pedestrian, a
+  passenger hurt in a crash you caused and at-fault crashes with cars are always paid. Cameras = red dots, police = blue
+  dots on the map. Cars: Petit taxi / Kasbah City / Medina Hatch (Asphalt's everyday cars, taxi colours), Settings `car`.
+  Start over (title + pause) = 300 DH, clean record.
 - Rules and prices (`src/taxi.js`): fare 7 DH + 4 DH / km, late -10 % per 15 s, bumps -25 %; fines red light 700,
   wrong way 700, pavement 500, accident fault 300, speeding 300 / 500 / 700 / 1000 by km/h over (5 km/h tolerance, 3 s);
   repair = closing speed² x 18; diesel 13.4 DH / L, 40 L tank; out of fuel = roadside help 150 DH + 6 L at 1.5x.
@@ -51,7 +58,8 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - Browser checks (Playwright, SDK from a My PC checkout `SDK=/path/to/g/sdk/mypc-sdk.js`; dev URL `?dev&fresh[&gear=manual|clutch][&x=&z=]`):
   `node tests/drive.mjs <folder>` (drive + pick-up, screenshots, fps) and `node tests/rules.mjs <folder>` (whole ride,
   speeding, crash card, refuel, roadside help, clutch stall / pull away / 2nd gear; must print "all passed"),
-  `node tests/walkers.mjs <folder>` (people walk, none on the asphalt).
+  `node tests/walkers.mjs <folder>` (people walk, none on the asphalt), `node tests/props.mjs` (poles, cameras, police off
+  the asphalt), `node tests/v020.mjs <folder>` (passengers, quote, car, pedestrian hit, pause, start over).
   The cloud has no GPU (~10 fps): fps proof belongs on the owner's PC.
 
 ## Stage 2 (planned)

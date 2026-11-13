@@ -67,30 +67,43 @@ export class Taxi {
             if (e !== this.lastE) { this.lastE = e; this.lastRem = 1e9; this.wrongT = 0; }
             const J = dir > 0 ? net.eB[e] : net.eA[e];
             const rem = dir > 0 ? net.eLen[e] - q.s : q.s;
-            // red light: crossing the stop line on red
+            const cop = this.enf ? this.enf.officer(v.px, v.pz) : null;   // an officer who sees the taxi (null = nobody)
+            // red light: crossing the stop line on red, seen by an officer
             const Li = net.jLight[J];
             if (Li >= 0 && speed > 2) {
                 const line = net.jr[J] + 1;
                 if (this.lastRem > line && rem <= line && this.lastJ === J) {
                     const k = net.slot(e, J), ph = k >= 0 ? net.lights[Li].ph[k] : 0;
-                    if (lightOf(Li, ph) === 2) { this.fine('red', FINES.red, ''); this.redT = this.time; }
+                    if (lightOf(Li, ph) === 2) { this.redT = this.time; if (cop) this.fine('red', FINES.red, 'seenPolice'); }
                 }
             }
             this.lastRem = rem; this.lastJ = J;
-            // wrong way up a one-way street
+            // wrong way up a one-way street (fined when an officer sees it)
             if (net.eOne[e] && dir < 0 && speed > 2) { this.wrongT += dt; this.wrongNow = 1; } else { this.wrongT = Math.max(0, this.wrongT - dt); this.wrongNow = 0; }
-            if (this.wrongT > 2.5 && this.wrongE !== e) { this.wrongE = e; this.fine('wrong', FINES.wrong, net.edgeName(e, this.lang) || ''); this.redT = this.time; }
-            // speeding: over the limit (5 km/h tolerance) for 3 s
+            if (this.wrongT > 2.5 && this.wrongE !== e) { this.redT = this.time; if (cop) { this.wrongE = e; this.fine('wrong', FINES.wrong, net.edgeName(e, this.lang) || ''); } }
+            // speeding: a speed camera measures the taxi as it passes; an officer who sees 3 s over the limit
             const lim = q.lim;
             this.limit = lim;
-            if (kmh > lim + 5) { this.overT += dt; this.overMax = Math.max(this.overMax, kmh - lim); } else { this.overT = Math.max(0, this.overT - dt * 2); if (this.overT === 0) this.overMax = 0; }
+            if (this.enf) {
+                for (const c of this.enf.cams) {
+                    if (c.e !== e || dir !== c.dir) continue;
+                    const was = this.camS, now = q.s;
+                    if (this.camE === e && was !== undefined && (was - c.s) * (now - c.s) <= 0 && was !== now && this.time > (c.cool || 0)) {
+                        c.cool = this.time + 20;
+                        this.flash = 0.25;
+                        if (kmh > lim + 5) this.fine('speed', speedFine(kmh - lim), 'camSpeed:' + Math.round(kmh) + ' km/h / ' + lim);
+                    }
+                }
+                this.camE = e; this.camS = q.s;
+            }
+            if (kmh > lim + 5 && cop) { this.overT += dt; this.overMax = Math.max(this.overMax, kmh - lim); } else { this.overT = Math.max(0, this.overT - dt * 2); if (this.overT === 0) this.overMax = 0; }
             if (this.overT > 3 && this.time > this.cool.speed) {
-                this.fine('speed', speedFine(this.overMax), Math.round(lim + this.overMax) + ' km/h / ' + lim);
+                this.fine('speed', speedFine(this.overMax), 'policeSpeed:' + Math.round(lim + this.overMax) + ' km/h / ' + lim);
                 this.cool.speed = this.time + 40; this.overT = 0; this.overMax = 0;
             }
-            // on the pavement
-            if (q.off >= 1 && Math.abs(q.d) > q.hl + 1.2 && speed > 3) this.paveT += dt; else this.paveT = Math.max(0, this.paveT - dt);
-            if (this.paveT > 1.2 && this.time > this.cool.pave) { this.fine('pave', FINES.pave, ''); this.cool.pave = this.time + 30; this.paveT = 0; }
+            // on the pavement, seen by an officer
+            if (q.off >= 1 && Math.abs(q.d) > q.hl + 1.2 && speed > 3 && cop) this.paveT += dt; else this.paveT = Math.max(0, this.paveT - dt);
+            if (this.paveT > 1.2 && this.time > this.cool.pave) { this.fine('pave', FINES.pave, 'seenPolice'); this.cool.pave = this.time + 30; this.paveT = 0; }
         } else this.wrongNow = 0;
         this.speeding = this.overT > 0;
         this.peopleTick(dt, v, q);
@@ -101,7 +114,7 @@ export class Taxi {
         else if (this.refuel) this.prompt = 'stop';
         else if (this.nearStation(v) && speed < 1.2 && this.fuel < this.tank - 0.5) this.prompt = 'refuel';
         else if (this.ride && this.ride.ped.state === 'in' && this.atDest(v) && speed < 1.6) this.prompt = 'dropoff';
-        else if (!this.ride && speed < 1.6 && this.nearPed(v)) this.prompt = 'pickup';
+        else if (!this.ride && speed < 1.6 && this.nearPed(v)) { this.prompt = 'pickup'; this.quote(v, q, this.nearPed(v)); }
     }
 
     // fuel: litres per hour = idle 0.7 + 0.26 per kW the engine gives (a diesel's brake specific consumption)
@@ -155,27 +168,46 @@ export class Taxi {
     }
 
     // ---- people ----
+    // a passenger waving on a pavement 40-320 m away (mostly ahead), each with somewhere to go 0.8-3.5 km away
     spawnPed(v, q2) {
-        const net = this.net;
+        const net = this.net, hd = Math.atan2(v.R[6], v.R[8]);
         for (let tries = 0; tries < 20; tries++) {
-            const a = rnd() * Math.PI * 2, r = 110 + rnd() * 330;
+            const a = rnd() < 0.7 ? hd + (rnd() - 0.5) * 2 : rnd() * Math.PI * 2, r = 40 + rnd() * 280;
             net.query(v.px + Math.sin(a) * r, v.pz + Math.cos(a) * r, -1, q2);
             const e = q2.edge;
             if (e < 0 || q2.junc >= 0 || net.eCls[e] === 0 || net.eLen[e] < 30 || q2.s < 10 || q2.s > net.eLen[e] - 10) continue;
-            const side = rnd() < 0.5 ? 1 : -1;
-            const at = net.at(e, q2.s, side * (net.eHw[e] + 1.7), {});
-            if (this.peds.some(p => Math.hypot(p.x - at.x, p.z - at.z) < 60)) continue;
-            this.peds.push({ x: at.x, y: at.y + 0.15, z: at.z, yaw: Math.atan2(-side * at.lx, -side * at.lz), e, s: q2.s, side, state: 'wait', t: rnd() * 3, kind: (rnd() * 6) | 0 });
+            const side = rnd() < 0.5 ? 1 : -1, i = q2.i;
+            if ((side > 0 ? net.pl[i] : net.pr[i]) < 1.5) continue;           // needs a pavement to stand on
+            const at = net.at(e, q2.s, side * (net.eHw[e] + 1.2), {});
+            if (this.peds.some(p => Math.hypot(p.x - at.x, p.z - at.z) < 45)) continue;
+            const dest = this.pickDest(at.x, at.z, q2);
+            if (!dest) continue;
+            this.peds.push({ x: at.x, y: at.y + 0.15, z: at.z, yaw: Math.atan2(-side * at.lx, -side * at.lz), e, s: q2.s, side, state: 'wait', t: rnd() * 3, kind: (rnd() * 6) | 0, dest });
             return;
         }
     }
+    // somewhere 0.8-3.5 km from (x, z) on a street a taxi can stop in; km = the estimate by road (straight line x 1.3)
+    pickDest(x, z, q2) {
+        const net = this.net;
+        for (let tries = 0; tries < 12; tries++) {
+            const a = rnd() * Math.PI * 2, r = 800 + rnd() * 2700;
+            net.query(x + Math.sin(a) * r, z + Math.cos(a) * r, -1, q2);
+            const e = q2.edge;
+            if (e < 0 || q2.junc >= 0 || net.eLen[e] < 30 || net.eCls[e] === 0) continue;
+            const s = Math.max(10, Math.min(net.eLen[e] - 10, q2.s)), at = net.at(e, s, 0, {});
+            const km = Math.hypot(at.x - x, at.z - z) * 1.3 / 1000;
+            return { e, s, name: net.edgeName(e, this.lang) || net.areaName(at.x, at.z, this.lang), km, fare: Math.round(FARE.flag + FARE.km * km) };
+        }
+        return null;
+    }
     peopleTick(dt, v, q) {
-        const want = this.ride ? 1 : 4;
-        if (this.peds.filter(p => p.state === 'wait').length < want && (this.time % 0.5) < dt) this.spawnPed(v, this.q2 || (this.q2 = {}));
+        const want = this.ride ? 2 : 6;
+        let waiting = 0; for (const p of this.peds) if (p.state === 'wait') waiting++;
+        if (waiting < want && (this.time % 0.25) < dt) this.spawnPed(v, this.q2 || (this.q2 = {}));
         for (let k = this.peds.length - 1; k >= 0; k--) {
             const p = this.peds[k];
             p.t += dt;
-            if (p.state === 'wait' && Math.hypot(p.x - v.px, p.z - v.pz) > 650) { this.peds.splice(k, 1); continue; }
+            if (p.state === 'wait' && Math.hypot(p.x - v.px, p.z - v.pz) > 500) { this.peds.splice(k, 1); continue; }
             if (p.state === 'walk') {   // to the taxi's door
                 const R = v.R, dx = v.px + R[0] * 1.1 * (p.side > 0 ? 1 : -1) - p.x, dz = v.pz + R[2] * 1.1 * (p.side > 0 ? 1 : -1) - p.z, d = Math.hypot(dx, dz);
                 if (d < 0.6 || p.t > 3) { p.state = 'in'; this.ride.t = 0; this.toast('boarded', 'ok'); }
@@ -193,38 +225,40 @@ export class Taxi {
         for (const p of this.peds) { if (p.state !== 'wait') continue; const d = Math.hypot(p.x - v.px, p.z - v.pz); if (d < bd) { bd = d; best = p; } }
         return best;
     }
+    // the trip a waiting passenger asks for, from where the taxi stands: route + price by its length (once per stop)
+    quote(v, q, p) {
+        if (p.quote && Math.hypot(p.quote.x - v.px, p.quote.z - v.pz) < 3) return p.quote;
+        const net = this.net, q2 = this.q2 || (this.q2 = {});
+        const heading = q.edge >= 0 ? ((v.R[6] * q.fx + v.R[8] * q.fz) >= 0 ? 1 : -1) : 1;
+        p.quote = null;
+        for (let tries = 0; tries < 6 && !p.quote; tries++) {
+            const d = tries === 0 ? p.dest : this.pickDest(p.x, p.z, q2);
+            if (!d) continue;
+            const route = net.route(q.edge >= 0 ? q.edge : d.e, q.edge >= 0 ? q.s : 0, heading, d.e, d.s);
+            if (!route || route.len < 500 || route.len > 7000) continue;
+            p.dest = d;
+            p.quote = { x: v.px, z: v.pz, route, km: route.len / 1000, fare: Math.round(FARE.flag + FARE.km * route.len / 1000), name: d.name };
+        }
+        return p.quote;
+    }
     pickup(v, q) {
         const p = this.nearPed(v); if (!p) return;
-        const net = this.net;
-        // a destination 0.8 to 3.5 km away by road, on a street the taxi can reach
-        const q2 = this.q2 || (this.q2 = {});
-        const dir = q.edge >= 0 ? (v.vx * q.fx + v.vz * q.fz >= 0 ? 1 : -1) : 1;
-        if (Math.abs(v.fwdSpeed) < 0.5 && q.edge >= 0) { const R = v.R; if (R[6] * q.fx + R[8] * q.fz < 0) { /* facing backwards */ } }
-        const heading = q.edge >= 0 ? ((v.R[6] * q.fx + v.R[8] * q.fz) >= 0 ? 1 : -1) : dir;
-        for (let tries = 0; tries < 30; tries++) {
-            const a = rnd() * Math.PI * 2, r = 800 + rnd() * 2700;
-            net.query(v.px + Math.sin(a) * r, v.pz + Math.cos(a) * r, -1, q2);
-            const e = q2.edge;
-            if (e < 0 || q2.junc >= 0 || net.eLen[e] < 30 || net.eCls[e] === 0) continue;
-            const s = Math.max(10, Math.min(net.eLen[e] - 10, q2.s));
-            const route = net.route(q.edge >= 0 ? q.edge : e, q.edge >= 0 ? q.s : 0, heading, e, s);
-            if (!route || route.len < 600 || route.len > 6000) continue;
-            const side = rnd() < 0.5 ? 1 : -1;
-            const at = net.at(e, s, side * (net.eHw[e] + 1.7), {});
-            p.state = 'walk'; p.t = 0;
-            this.ride = { ped: p, e, s, side, x: at.x, y: at.y, z: at.z, route, len: route.len, eta: route.len / 8.2 + 45, t: 0, km: 0, hits: 0, fines: 0, scare: 0,
-                name: net.edgeName(e, this.lang), routeT: 0 };
-            this.toast('pickup', 'ok');
-            return;
-        }
-        this.toast('noDest', 'warn');
+        const net = this.net, Q = this.quote(v, q, p);
+        if (!Q) { this.toast('noDest', 'warn'); p.state = 'out'; p.t = 0; return; }
+        const d = p.dest, route = Q.route;
+        const side = rnd() < 0.5 ? 1 : -1;
+        const at = net.at(d.e, d.s, side * (net.eHw[d.e] + 1.7), {});
+        p.state = 'walk'; p.t = 0;
+        this.ride = { ped: p, e: d.e, s: d.s, side, x: at.x, y: at.y, z: at.z, route, len: route.len, eta: route.len / 8.2 + 45, t: 0, km: 0, hits: 0, fines: 0, scare: 0,
+            name: d.name, fare: Q.fare, routeT: 0 };
+        this.toast('pickup', 'ok');
     }
     atDest(v) { const r = this.ride; return r && Math.hypot(r.x - v.px, r.z - v.pz) < this.net.eHw[r.e] + 14; }
-    meter() { const r = this.ride; return r ? FARE.flag + FARE.km * r.km : 0; }
+    meter() { const r = this.ride; return r ? r.fare : 0; }
     dropoff(v) {
         const r = this.ride; if (!r) return;
         const fare = this.meter();
-        const lines = [['meterKm:' + r.km.toFixed(1), Math.round(fare)]];
+        const lines = [['fareKm:' + (r.len / 1000).toFixed(1), Math.round(fare)]];
         let total = fare;
         const late = r.t - r.eta;
         if (late > 0) { const k = Math.min(0.6, Math.ceil(late / 15) * 0.1); lines.push(['lateBy:' + Math.round(late), -Math.round(fare * k)]); total -= fare * k; }
@@ -237,6 +271,16 @@ export class Taxi {
         const p = r.ped; p.state = 'out'; p.t = 0; p.x = v.px + v.R[0] * 2.2 * r.side; p.z = v.pz + v.R[2] * 2.2 * r.side; p.y = r.y + 0.15; p.yaw = Math.atan2(v.R[6], v.R[8]);
         if (!this.peds.includes(p)) this.peds.push(p);
         this.ride = null;
+    }
+
+    // the taxi ran into a person on foot: always the driver's fault, always paid
+    hitPed(kmh) {
+        const hurt = Math.round((800 + kmh * 60) / 10) * 10;
+        const lines = [['impact:' + Math.round(kmh), 0], ['pedHurt', -hurt], ['fineFault', -FINES.fault]];
+        const total = -hurt - FINES.fault;
+        this.money += total; this.stats.repairs += hurt; this.stats.fines += FINES.fault; this.dirty = true;
+        if (this.ride) this.ride.hits++;
+        this.events.push({ kind: 'crash', title: 'fine_ped', lines, total });
     }
 
     // ---- accidents ----
@@ -268,6 +312,7 @@ export class Taxi {
         this.money += total; this.stats.repairs += -total - (c.car && fault ? FINES.fault : 0); this.dirty = true;
         if (this.ride && this.ride.ped.state === 'in') {
             this.ride.hits++;
+            if (fault && c.rel > 6) { const comp = Math.round((200 + c.rel * 40) / 10) * 10; lines.push(['passengerHurt', -comp]); total -= comp; this.money -= comp; this.stats.repairs += comp; }
             if (c.rel > 8.5) {   // a real crash: the passenger gets out and does not pay
                 const p = this.ride.ped; p.state = 'gone'; this.ride = null;
                 lines.push(['passengerLeft', 0]);

@@ -14,7 +14,7 @@ const STEP = 1 / 60;
 const App = {
     renderer: null, canvas: null, info: null, quality: null, net: null,
     input: new Input(), shift: null, hud: null, ui: null, sound: null,
-    raf: 0, last: 0, acc: 0, state: 'boot', paused: false, saved: null, settings: { gearbox: 'auto' },
+    raf: 0, last: 0, acc: 0, state: 'boot', paused: false, saved: null, settings: { gearbox: 'auto', car: 'taxi' },
     fpsLog: [], workLog: [], saveT: 0
 };
 window.TT = App;   // for the browser checks (tests/)
@@ -73,19 +73,26 @@ function save() {
 
 App.saveSettings = () => MyPC.save('settings', App.settings);
 App.applyGear = () => { if (!App.shift) return; const v = App.shift.me.veh, g = App.settings.gearbox; v.gearbox = g === 'auto' ? null : g; v.mgear = 1; v.stalled = false; };
-App.startShift = function () {
+App.startShift = function (keep) {
     App.ui.hide();
-    if (App.shift) { App.shift.dispose(); App.shift = null; }
-    const shift = new Shift(App.renderer, App.net, App.quality, { gearbox: App.settings.gearbox, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
+    if (App.shift) { if (!keep) save(); App.shift.dispose(); App.shift = null; }
+    const shift = new Shift(App.renderer, App.net, App.quality, { gearbox: App.settings.gearbox, car: App.settings.car, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
     shift.onScale = () => resize();
     shift.onSound = (k, r, x) => App.sound.event(k, r, x, shift);
     App.shift = shift;
     App.hud.begin(shift, () => App.input.hasPad() && MyPC.gamepad && MyPC.gamepad.label ? '(' + MyPC.gamepad.label(0) + ')' : '(OK)');
-    App.sound.begin(shift);
+    App.sound.resume(); App.sound.begin(shift);
     App.input.clearHeld();
     App.state = 'drive';
     resize();
     MyPC.announce && MyPC.announce(I18n.t('boarded').split(':')[0]);
+};
+// a fresh start: 300 DH, a quarter tank, no record (the place in town is kept)
+App.resetCareer = function () {
+    const at = App.saved && App.saved.at;
+    App.saved = at ? { at } : null;
+    MyPC.save('taxi', App.saved);
+    if (App.shift) { const v = App.shift.me.veh; App.saved = { at: { x: Math.round(v.px), z: Math.round(v.pz) } }; App.shift.taxi.dirty = false; App.startShift(true); }
 };
 App.pauseShift = function () { if (App.state !== 'drive') return; App.state = 'pause'; App.sound.pause(); App.ui.pause(); };
 App.resumeShift = function () { App.ui.hide(); App.input.clearHeld(); App.input.prev.action = true; App.state = 'drive'; App.sound.resume(); };
@@ -111,7 +118,7 @@ MyPC.init({
             await loadModels(p => MyPC.progress(p * 0.6));
             App.net = await Net.load(p => MyPC.progress(0.6 + p * 0.35));
             App.saved = MyPC.load('taxi', null);
-            App.settings = Object.assign({ gearbox: 'auto' }, MyPC.load('settings', null));
+            App.settings = Object.assign({ gearbox: 'auto', car: 'taxi' }, MyPC.load('settings', null));
             App.hud = new Hud(document.getElementById('hud'));
             App.sound = new Sound(info.volume || { music: 0.7, sfx: 0.8 });
             App.ui = new UI(App, document.getElementById('ui'));
@@ -132,6 +139,7 @@ MyPC.init({
         const P = new URLSearchParams(location.search);
         if (P.has('dev')) {   // test hook: ?dev[&gear=manual|clutch][&x=..&z=..][&fresh]
             if (P.get('gear')) App.settings.gearbox = P.get('gear');
+            if (P.get('car')) App.settings.car = P.get('car');
             if (P.has('fresh')) App.saved = null;
             if (P.has('x')) App.saved = Object.assign({}, App.saved, { at: { x: +P.get('x'), z: +P.get('z') } });
             App.startShift();

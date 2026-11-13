@@ -96,7 +96,7 @@ export class Hud {
         if (R && R.ped.state === 'in') {
             const left = Math.max(0, R.eta - R.t);
             const d = R.route ? R.route.len : 0;
-            const txt = I18n.t('to') + ' ' + (R.name || '—') + '\n' + (d / 1000).toFixed(1) + ' km · ' + (left > 0 ? I18n.t('eta') + ' ' + Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0') : I18n.t('late')) + '\n' + I18n.t('meter') + ' ' + T.meter().toFixed(1) + ' DH';
+            const txt = I18n.t('to') + ' ' + (R.name || '—') + '\n' + (d / 1000).toFixed(1) + ' km · ' + (left > 0 ? I18n.t('eta') + ' ' + Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0') : I18n.t('late')) + '\n' + I18n.t('fare') + ' ' + T.meter() + ' DH';
             this.set(this.ride, 'ride', txt);
             this.ride.className = 'h-ride on' + (left <= 0 ? ' late' : '');
         } else { this.set(this.ride, 'ride', ''); this.ride.className = 'h-ride'; }
@@ -105,6 +105,7 @@ export class Hud {
         const key = p === 'help' ? 'help_' : p;
         let ptxt = '';
         if (p === 'helpWait') ptxt = I18n.t('helpWait');
+        else if (p === 'pickup') { const n = T.nearPed(v), Q = n && n.quote; ptxt = this.label() + '  ' + (Q ? I18n.t('pickupTo', Q.name || '—', Q.km.toFixed(1), Q.fare) : I18n.t('pickup')); }
         else if (p) ptxt = this.label() + '  ' + I18n.t(key) + (p === 'refuel' ? '  (' + FUEL_PRICE + ' DH/L)' : '');
         this.set(this.prompt, 'prompt', ptxt); this.prompt.className = 'h-prompt' + (ptxt ? ' on' : '');
         this.map(S, v, T, step);
@@ -126,23 +127,35 @@ export class Hud {
         const R = T.ride;
         if (R && R.route && R.ped.state === 'in') {
             x.strokeStyle = '#2cff8f'; x.lineWidth = 3.2 / k; x.beginPath();
-            let first = true, count = 0;
-            for (const [e, dir] of R.route.edges) {
-                const o = net.eOff[e], n = net.eN[e];
+            // from the taxi along the route: the first street only ahead of the taxi, the last one only up to the stop
+            const E = R.route.edges, sNow = S.qp.edge === (E[0] && E[0][0]) ? S.qp.s : -1;
+            x.moveTo(0, 0);
+            let count = 0;
+            for (let r = 0; r < E.length; r++) {
+                const e = E[r][0], dir = E[r][1], o = net.eOff[e], n = net.eN[e];
                 for (let m = 0; m < n; m++) {
-                    const i = o + (dir > 0 ? m : n - 1 - m);
-                    const X = (net.px[i] - v.px) / MPP, Z = (net.pz[i] - v.pz) / MPP;
-                    if (first) { x.moveTo(X, Z); first = false; } else x.lineTo(X, Z);
+                    const i = o + (dir > 0 ? m : n - 1 - m), si = net.sS[i];
+                    if (r === 0 && sNow >= 0 && (dir > 0 ? si < sNow : si > sNow)) continue;
+                    if (r === E.length - 1 && e === R.e && (dir > 0 ? si > R.s : si < R.s)) break;
+                    x.lineTo((net.px[i] - v.px) / MPP, (net.pz[i] - v.pz) / MPP);
                     if (++count > 2000) break;
                 }
             }
-            x.stroke();
             const dx = (R.x - v.px) / MPP, dz = (R.z - v.pz) / MPP;
+            x.lineTo(dx, dz);
+            x.stroke();
             x.fillStyle = '#2cff8f'; x.beginPath(); x.arc(dx, dz, 5 / k, 0, 7); x.fill();
         }
         // people waiting, stations
         x.fillStyle = '#ffd400';
         for (const p of T.peds) if (p.state === 'wait') { x.beginPath(); x.arc((p.x - v.px) / MPP, (p.z - v.pz) / MPP, 3.6 / k, 0, 7); x.fill(); }
+        const enf = S.enforce;
+        if (enf) {
+            x.fillStyle = '#ff4b3e';
+            for (const c of enf.cams) { const X = (c.x - v.px) / MPP, Z = (c.z - v.pz) / MPP; if (X * X + Z * Z < 12000) { x.beginPath(); x.arc(X, Z, 3.4 / k, 0, 7); x.fill(); } }
+            x.fillStyle = '#3d7bff';
+            for (const c of enf.police) { const X = (c.x - v.px) / MPP, Z = (c.z - v.pz) / MPP; if (X * X + Z * Z < 12000) { x.beginPath(); x.arc(X, Z, 3.8 / k, 0, 7); x.fill(); } }
+        }
         x.fillStyle = '#19d17a';
         for (const s of net.stations) { const i = net.eOff[s.e] + s.k; x.fillRect((net.px[i] - v.px) / MPP - 4 / k, (net.pz[i] - v.pz) / MPP - 4 / k, 8 / k, 8 / k); }
         x.restore();
