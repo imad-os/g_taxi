@@ -15,7 +15,7 @@ export class UI {
     }
     hide() { this.root.style.display = 'none'; this.root.innerHTML = ''; this.items = []; this.screen = ''; }
     get open() { return this.root.style.display === 'block'; }
-    paint() { this.items.forEach((e, i) => e.classList.toggle('focus', i === this.f)); }
+    paint() { this.items.forEach((e, i) => e.classList.toggle('focus', i === this.f)); const f = this.items[this.f]; if (f && f.scrollIntoView) f.scrollIntoView({ block: 'nearest' }); }
     input(a, dev, repeat) {
         if (!this.open) return false;
         if (a === 'up' || a === 'left') { this.f = (this.f + this.items.length - 1) % this.items.length; this.paint(); this.app.sound.ui('move'); }

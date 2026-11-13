@@ -29,7 +29,7 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .panel h3 { color: var(--gold); margin: calc(var(--u) * 2.5) 0 calc(var(--u) * 1); }
 .panel p { margin: calc(var(--u) * 1) 0; line-height: 1.35; }
 .panel p.small { font-size: calc(var(--u) * 2.2); opacity: .85; }
-.panel.pause { inset: calc(var(--u) * 10) calc(var(--u) * 52); display: flex; flex-direction: column; }
+.panel.pause { inset: calc(var(--u) * 4) calc(var(--u) * 52); display: flex; flex-direction: column; overflow-y: auto; }
 .panel .btn { min-width: 0; }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * .6) calc(var(--u) * 4); margin-bottom: calc(var(--u) * 2); font-size: calc(var(--u) * 2.2); }
 .stats .st { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: calc(var(--u) * .4); }
@@ -89,3 +89,4 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 [dir=rtl] .h-cash { left: auto; right: calc(var(--u) * 3.5); }
 [dir=rtl] .h-map, [dir=rtl] .h-area { right: auto; left: calc(var(--u) * 3.5); }
 .panel p.bugmsg { color: var(--gold); text-align: center; font-size: calc(var(--u) * 2.2); }
+.panel.pause > * { flex-shrink: 0; }
