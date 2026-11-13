@@ -321,8 +321,8 @@ export class CityWorld {
             // only where that side has its own pavement and the spot is clear of every street and junction
             // (a dual carriageway's other half or a crossing street can be closer than the pavement's width)
             const pl0 = net.pl[i], pr0 = net.pr[i];
-            if (cls <= 3 && i % 10 === 0 && pl0 > 1.4) { const d = hw + 0.9; if (this.clear(x + lx * d, z + lz * d, 0.6)) detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw + Math.PI / 2, 1); }
-            if (cls <= 3 && i % 10 === 5 && pr0 > 1.4) { const d = -(hw + 0.9); if (this.clear(x + lx * d, z + lz * d, 0.6)) detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw - Math.PI / 2, 1); }
+            if (cls <= 3 && i % 10 === 0 && pl0 > 1.4) { const d = hw + 0.9; if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, y + 0.15, z + lz * d, -lx, -lz); }
+            if (cls <= 3 && i % 10 === 5 && pr0 > 1.4) { const d = -(hw + 0.9); if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, y + 0.15, z + lz * d, lx, lz); }
             if (i % 6 === 3 && rnd() < (cls >= 4 ? 0.45 : 0.3)) {
                 const sg = rnd() < 0.5 ? 1 : -1, d = sg * (hw + PAVE - 0.7);
                 if ((sg > 0 ? pl0 : pr0) < PAVE - 0.05 || !this.clear(x + lx * d, z + lz * d, 1.6)) continue;
@@ -332,6 +332,15 @@ export class CityWorld {
                 detail.model(kind, 'body', x + lx * d, y + 0.15, z + lz * d, rnd() * 6.28, sc);
             }
         }
+    }
+
+    // a street lamp whose POLE stands at (x, z), its head leaning over the street (rx, rz = towards the street).
+    // The model's pole is not at its origin: it stands at (-1.575, -2.925) with the head towards +z.
+    lamp(detail, x, y, z, rx, rz) {
+        if (this.poleLog) this.poleLog.push(x, z);   // tests
+        const S = 2, yaw = Math.atan2(rx, rz), cs = Math.cos(yaw), sn = Math.sin(yaw);
+        const bx = -1.575 * S, bz = -2.925 * S;
+        detail.model('light_modern', 'body', x - (bx * cs + bz * sn), y, z - (-bx * sn + bz * cs), yaw, S);
     }
 
     // nothing drivable within m metres of (x, z): no street's asphalt, no junction

@@ -58,7 +58,7 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - Browser checks (Playwright, SDK from a My PC checkout `SDK=/path/to/g/sdk/mypc-sdk.js`; dev URL `?dev&fresh[&gear=manual|clutch][&x=&z=]`):
   `node tests/drive.mjs <folder>` (drive + pick-up, screenshots, fps) and `node tests/rules.mjs <folder>` (whole ride,
   speeding, crash card, refuel, roadside help, clutch stall / pull away / 2nd gear; must print "all passed"),
-  `node tests/walkers.mjs <folder>` (people walk, none on the asphalt), `node tests/props.mjs` (poles, cameras, police off
+  `node tests/walkers.mjs <folder>` (people walk, none on the asphalt), `node tests/props.mjs` (street lamps, light poles, cameras, police off
   the asphalt), `node tests/v020.mjs <folder>` (passengers, quote, car, pedestrian hit, pause, start over).
   The cloud has no GPU (~10 fps): fps proof belongs on the owner's PC.
 
