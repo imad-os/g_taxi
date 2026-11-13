@@ -13,6 +13,7 @@ import { Taxi } from './taxi.js';
 import { People } from './people.js';
 import { Walkers } from './walkers.js';
 import { Enforce } from './enforce.js';
+import { BugLog } from './buglog.js';
 
 // the petit taxi: a 1.5 l diesel city saloon (real numbers: 66 kW, 200 Nm, 5 gears), Tangier's turquoise
 SPECS.taxi = { model: 'tr_taxi', cls: 'T', mass: 1180, power: 66, torque: 200, rpm: 4600, gears: [3.73, 2.05, 1.32, 0.97, 0.76], final: 4.21,
@@ -79,6 +80,7 @@ export class Shift {
         this.frameMs = 16.7; this.scale = quality.scale || 1; this.lateFrames = 0; this.goodFrames = 0;
         this.size = new THREE.Vector2();
         this.shiftMsg = '';
+        this.bug = new BugLog();
     }
 
     // put the taxi on a street near the saved place (or the city centre), facing along it
@@ -105,7 +107,7 @@ export class Shift {
             return Math.abs(dx * R[0] + dz * R[2]) < 1.1 && Math.abs(dx * R[6] + dz * R[8]) < 2.5 && Math.abs(p.y - v.py) < 2.5;
         };
         const kmh = Math.abs(v.fwdSpeed) * 3.6;
-        for (const p of this.walkers.list) if (p.live && chk(p)) { p.live = false; p.wait = 6; taxi.hitPed(kmh); this.onSound && this.onSound('hit', this.me, 5); }
+        for (const p of this.walkers.list) if (p.live && chk(p)) { p.live = false; p.wait = 6; taxi.hitPed(kmh); this.bug.event('walker', Math.round(kmh)); this.onSound && this.onSound('hit', this.me, 5); }
         for (const p of taxi.peds) if (p.state === 'wait' && chk(p)) { p.state = 'gone'; taxi.hitPed(kmh); this.onSound && this.onSound('hit', this.me, 5); }
     }
 
@@ -147,6 +149,7 @@ export class Shift {
         }
         net.query(v.px, v.pz, v.hint, this.qp);
         taxi.update(dt, v, this.qp, (L, ph) => lightState(net, L, ph, this.traffic.t));
+        this.bug.tick(dt, this);
         // a new route every 4 s while carrying someone (follows the taxi's detours)
         if (taxi.ride && taxi.ride.ped.state === 'in' && (this.routeT -= dt) <= 0 && this.qp.edge >= 0) {
             this.routeT = 4;
@@ -177,6 +180,7 @@ export class Shift {
     // the taxi hit something: the accident is assessed by the job (fault: who drove into whom)
     onHit(other, rel, meFirst) {
         const v = this.me.veh;
+        this.bug.event(other ? 'car' : 'wall', Math.round(rel * 36) / 10 + ' km/h');
         this.cam.kick(Math.min(0.8, rel * 0.04));
         if (this.onSound) this.onSound('hit', this.me, rel);
         let fault = true;

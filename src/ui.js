@@ -59,14 +59,14 @@ ${st ? `<div class="mini">${I18n.t('money')} <b>${Math.round(this.app.saved.mone
         this.show(`<div class="panel"><h2>${I18n.t('ctlTitle')}</h2><p>${I18n.t('ctlDrive')}</p><p>${I18n.t('ctlAct')}</p><p>${I18n.t('ctlGear')}</p><p>${I18n.t('ctlRemote')}</p>
 <h3>${I18n.t('rules')}</h3><p class="small">${I18n.t('rulesText')}</p><div class="btn" data-f>${I18n.t('back')}</div></div>`, [back], back);
     }
-    pause() {
+    pause(focus) {
         this.screen = 'pause';
         const T = this.app.shift.taxi, s = T.stats;
         const row = (k, v) => `<div class="st"><span>${I18n.t(k)}</span><b>${v}</b></div>`;
-        this.show(`<div class="panel pause"><h2>${I18n.t('paused')}</h2>
+        this.show(`<div class="panel pause"><h2>${I18n.t('paused')}</h2>${this.app.bugMsg ? `<p class="bugmsg">${I18n.line(this.app.bugMsg)}</p>` : ''}
 <div class="stats">${row('money', Math.round(T.money) + ' DH')}${row('rides', s.rides)}${row('earned', Math.round(s.earned) + ' DH')}${row('fines', Math.round(s.fines) + ' DH')}${row('repairs', Math.round(s.repairs) + ' DH')}${row('fuelSpent', Math.round(s.fuel) + ' DH')}${row('km', s.km.toFixed(1))}</div>
-<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn" data-f>${I18n.t('car')}: <b>${this.carLabel()}</b></div><div class="btn" data-f>${I18n.t('gearbox')}: <b>${this.gearLabel()}</b></div><div class="btn" data-f>${I18n.t('limiter')}: <b>${T.limiter ? T.limiter + ' km/h' : I18n.t('off')}</b></div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
+<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn" data-f>${I18n.t('car')}: <b>${this.carLabel()}</b></div><div class="btn" data-f>${I18n.t('gearbox')}: <b>${this.gearLabel()}</b></div><div class="btn" data-f>${I18n.t('limiter')}: <b>${T.limiter ? T.limiter + ' km/h' : I18n.t('off')}</b></div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
         [() => this.app.resumeShift(), () => { this.cycleCar(() => {}, 1); this.app.startShift(); }, () => this.cycleGear(() => this.pause(), 2), () => { T.limiter = T.limiter ? 0 : 50; this.pause(); this.f = 3; this.paint(); },
-            () => this.controls(() => this.pause()), () => this.confirmReset(() => this.app.resetCareer(), () => { this.pause(); this.f = 5; this.paint(); }), () => this.app.endShift()], () => this.app.resumeShift());
+            () => this.controls(() => this.pause()), () => this.confirmReset(() => this.app.resetCareer(), () => { this.pause(); this.f = 5; this.paint(); }), () => this.app.reportBug(), () => this.app.endShift()], () => this.app.resumeShift(), focus);
     }
 }

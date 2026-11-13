@@ -47,7 +47,7 @@ function frame(ts) {
     let n = 0;
     while (App.acc >= STEP * 1000 - 0.5 && n < 4) { update(STEP); App.acc -= STEP * 1000; n++; }
     if (App.acc > STEP * 2000) App.acc = 0;
-    if (App.shift && App.state !== 'boot') App.shift.render(ms);
+    if (App.shift && App.state !== 'boot') { App.shift.render(ms); if (App.capture) sendBug(App.capture); }
     if (App.fpsLog.length < 20000) { App.fpsLog.push(ms); App.workLog.push(performance.now() - t0); }
 }
 function startLoop() { if (!App.raf) { App.last = 0; App.acc = 0; App.raf = requestAnimationFrame(frame); } }
@@ -55,6 +55,7 @@ function stopLoop() { if (App.raf) cancelAnimationFrame(App.raf); App.raf = 0; }
 
 function update(dt) {
     App.input.poll(dt);
+    if (App.input.edge.capture && App.shift && (App.state === 'drive' || App.state === 'pause')) App.capture = 'capture';
     if (App.state === 'drive' && App.shift) {
         App.shift.update(dt, App.input);
         App.hud.update(dt, App.input);
@@ -70,6 +71,23 @@ function save() {
     App.saved = s;
     MyPC.save('taxi', s);
 }
+
+// a bug report (Capture button, or Pause > Report a bug): the picture of the frame just drawn + the last minute of driving
+function sendBug(from) {
+    App.capture = null;
+    const S = App.shift;
+    if (!S || App.bugBusy) return;
+    const img = S.bug.shot(App.canvas), f = App.fpsLog.slice(-120);
+    const data = S.bug.state(S, { from, state: App.state, lang: I18n.lang, screen: [App.canvas.width, App.canvas.height], fps: f.length ? Math.round(1000 * f.length / f.reduce((a, b) => a + b, 0)) : 0 });
+    window.TT.lastBug = { data, img: img.length };
+    const say = (k, kind) => { App.bugMsg = k; if (App.state === 'pause' && App.ui.screen === 'pause') App.ui.pause(App.ui.f); else S.taxi.toast(k, kind); };
+    if (!MyPC.bug) { say('bugOld', 'bad'); return; }
+    App.bugBusy = true; say('bugSending', 'info');
+    MyPC.bug(from === 'menu' ? 'Pause > Report a bug' : 'Capture button', data, img)
+        .then(id => { App.bugBusy = false; window.TT.lastBug.id = id; say('bugSent:' + String(id).slice(0, 6), 'ok'); })
+        .catch(e => { App.bugBusy = false; window.TT.lastBug.error = e && e.code; console.warn('[taxi] bug report', e && e.code, data); say('bugFail:' + (e && e.code || '?'), 'bad'); });
+}
+App.reportBug = () => { App.capture = 'menu'; };
 
 App.saveSettings = () => MyPC.save('settings', App.settings);
 App.applyGear = () => { if (!App.shift) return; const v = App.shift.me.veh, g = App.settings.gearbox; v.gearbox = g === 'auto' ? null : g; v.mgear = 1; v.stalled = false; };
@@ -94,7 +112,7 @@ App.resetCareer = function () {
     MyPC.save('taxi', App.saved);
     if (App.shift) { const v = App.shift.me.veh; App.saved = { at: { x: Math.round(v.px), z: Math.round(v.pz) } }; App.shift.taxi.dirty = false; App.startShift(true); }
 };
-App.pauseShift = function () { if (App.state !== 'drive') return; App.state = 'pause'; App.sound.pause(); App.ui.pause(); };
+App.pauseShift = function () { if (App.state !== 'drive') return; App.state = 'pause'; App.bugMsg = null; App.sound.pause(); App.ui.pause(); };
 App.resumeShift = function () { App.ui.hide(); App.input.clearHeld(); App.input.prev.action = true; App.state = 'drive'; App.sound.resume(); };
 App.endShift = function () {
     save();

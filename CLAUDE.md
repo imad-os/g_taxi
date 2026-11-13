@@ -54,13 +54,23 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   repair = closing speed² x 18; diesel 13.4 DH / L, 40 L tank; out of fuel = roadside help 150 DH + 6 L at 1.5x.
 - Controls (`src/input.js`): ZR gas, ZL brake (held at a stop = reverse in automatic), stick / D-pad steer, B handbrake,
   X clutch (a button lets it out over 0.9 s), R / L gear up / down, D-pad up / down = limiter, A = the action shown
-  (pick up, drop off, refuel, help), Y camera, + / Back = pause.
+  (pick up, drop off, refuel, help), Y camera, + / Back = pause, Capture = bug report.
 - Browser checks (Playwright, SDK from a My PC checkout `SDK=/path/to/g/sdk/mypc-sdk.js`; dev URL `?dev&fresh[&gear=manual|clutch][&x=&z=]`):
   `node tests/drive.mjs <folder>` (drive + pick-up, screenshots, fps) and `node tests/rules.mjs <folder>` (whole ride,
   speeding, crash card, refuel, roadside help, clutch stall / pull away / 2nd gear; must print "all passed"),
   `node tests/walkers.mjs <folder>` (people walk, none on the asphalt), `node tests/props.mjs` (street lamps, light poles, cameras, police off
   the asphalt), `node tests/v020.mjs <folder>` (passengers, quote, car, pedestrian hit, pause, start over).
+  `node tests/heights.mjs` (junction planes vs streets), `node tests/surface.mjs [x z]` (rays on the drawn asphalt vs net.query
+  on a 5 m grid: streets drawn over each other), `node tests/bug.mjs <folder>` (Capture button / Pause > Report a bug).
   The cloud has no GPU (~10 fps): fps proof belongs on the owner's PC.
+- **Bug reports (owner request 2026-11-13, 0.3.0)**: the controller's Capture button (17) or Pause > Report a bug sends, through
+  `MyPC.bug` (My PC API 22), the last minute of driving (`src/buglog.js`, a sample every 0.25 s), the four wheels' driven
+  height (net.query) vs the drawn height (a ray on the road meshes), a 9 x 9 grid of those around the car, the street /
+  junction, camera, events, and a 960 px JPEG of the frame. Saved in My PC's Firestore `bugs` (public read, 30 days).
+  **When imad says "check the logs": `node tools/bugs.mjs [n] [id]`** (saves `bugs/<id>/report.json` + `shot.jpg`, not committed).
+- Road surface: where two streets' asphalt overlaps (or is within `MERGE` = 2.5 m), `net.query` blends their heights by depth,
+  and `city.js` draws every asphalt vertex (5 columns across) at `net.query`'s height; a pavement / verge reaching onto
+  another street's asphalt goes 4 cm under it. Junctions with 3+ streets: one fitted plane (`fitJunctions`, `BLEND` 12 m).
 
 ## Stage 2 (planned)
 Garage with upgrades that change the part's look (TV-safe layout), real fuel station places from OSM, turn-by-turn hints,

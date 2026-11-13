@@ -63,7 +63,7 @@ export class Hud {
         this.t += dt;
         // cards and toasts as they come (not throttled)
         while (T.events.length) { const e = T.events.shift(); this.card(e); T.log.push(e); if (T.log.length > 20) T.log.shift(); }
-        while (T.toasts.length) { const m = T.toasts.shift(); this.toastE.textContent = I18n.t(m.text); this.toastE.className = 'h-toast on ' + m.kind; this.toastT = 3.2; }
+        while (T.toasts.length) { const m = T.toasts.shift(); this.toastE.textContent = I18n.line(m.text); this.toastE.className = 'h-toast on ' + m.kind; this.toastT = 3.2; }
         if (this.toastT > 0 && (this.toastT -= dt) <= 0) this.toastE.className = 'h-toast';
         for (const c of this.cards.children) { c._t -= dt; if (c._t <= 0 && !c._gone) { c._gone = true; c.classList.add('out'); setTimeout(() => c.remove(), 400); } }
         if (this.t < 0.08) return;

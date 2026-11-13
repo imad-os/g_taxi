@@ -6,6 +6,8 @@ import { VERSION } from './version.js';
 
 const CELL = 16;
 export const PAVE = 3.5;
+export const BLEND = 12;
+export const MERGE = 2.5;     // m: asphalt this close to another street's asphalt blends into it (query)   // m: a street bends into its junction's plane over this length
 export const WALL = 3.25;        // invisible wall at the outer edge of the pavement (metres beyond the asphalt)
 
 export class Net {
@@ -65,11 +67,78 @@ export class Net {
         this.jLight = new Int32Array(NJ).fill(-1);
         for (let k = 0; k < this.lights.length; k++) this.jLight[this.lights[k].j] = k;
         this.buildGrid();
+        this.fitJunctions();
         // ground grid (Int16 decimetres)
         const gh = new Float32Array(groundBuf, 0, 5);
         this.g = { x0: gh[0], z0: gh[1], c: gh[2], nx: gh[3] | 0, nz: gh[4] | 0, h: new Int16Array(groundBuf, 20, (gh[3] | 0) * (gh[4] | 0)) };
         this.bld = new Float32Array(bldBuf);
     }
+
+    // A junction where 3+ streets meet is drawn as one surface: a plane fitted to its streets' centre lines (the city's
+    // height field is smooth, so a plane holds within centimetres). The streets bend into that plane over their last
+    // BLEND metres, across their whole width, so the junction, the street ends, the car and everything standing there
+    // share one surface (before 0.2.2 the plaza was drawn flat at the centre's height: up to 1.8 m off on a slope).
+    fitJunctions() {
+        const NJ = this.nj;
+        this.jgx = new Float32Array(NJ); this.jgz = new Float32Array(NJ); this.jPlane = new Uint8Array(NJ);
+        // junctions whose plazas touch (roundabouts, staggered crossings) share one plane: union-find over close pairs
+        const up = new Int32Array(NJ); for (let j = 0; j < NJ; j++) up[j] = j;
+        const find = j => { while (up[j] !== j) { up[j] = up[up[j]]; j = up[j]; } return j; };
+        const big = []; for (let j = 0; j < NJ; j++) if (this.jEdges[j].length >= 3) big.push(j);
+        const cell = new Map(), CK = 40, ck = (x, z) => Math.floor(x / CK) * 100000 + Math.floor(z / CK);
+        for (const j of big) { const k = ck(this.jx[j], this.jz[j]); let l = cell.get(k); if (!l) cell.set(k, l = []); l.push(j); }
+        for (const j of big) {
+            const ci = Math.floor(this.jx[j] / CK), cj = Math.floor(this.jz[j] / CK);
+            for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) for (const k of cell.get((ci + di) * 100000 + cj + dj) || []) {
+                if (k <= j) continue;
+                if (Math.hypot(this.jx[k] - this.jx[j], this.jz[k] - this.jz[j]) < this.jr[j] + this.jr[k] + 4) up[find(k)] = find(j);
+            }
+        }
+        const groups = new Map(); for (const j of big) { const r = find(j); let g = groups.get(r); if (!g) groups.set(r, g = []); g.push(j); }
+        for (const g of groups.values()) {
+            const cx = this.jx[g[0]], cz = this.jz[g[0]];
+            let n = 0, sx = 0, sz = 0, sy = 0, sxx = 0, szz = 0, sxz = 0, sxy = 0, szy = 0;
+            const seen = new Set();
+            for (const j of g) {
+                const R = this.jr[j] + BLEND + 2;
+                for (const e of this.jEdges[j]) {
+                    const o = this.eOff[e], N = this.eN[e];
+                    for (let k = 0; k < N; k++) {
+                        const i = o + k;
+                        if (seen.has(i)) continue;
+                        const ex = this.px[i] - this.jx[j], ez = this.pz[i] - this.jz[j];
+                        if (ex * ex + ez * ez > R * R) continue;
+                        seen.add(i);
+                        const dx = this.px[i] - cx, dz = this.pz[i] - cz, y = this.py[i];
+                        n++; sx += dx; sz += dz; sy += y; sxx += dx * dx; szz += dz * dz; sxz += dx * dz; sxy += dx * y; szy += dz * y;
+                    }
+                }
+            }
+            if (n < 3) continue;
+            // least squares y = c + gx dx + gz dz (a little ridge keeps a junction of straight-through streets sane)
+            const mx = sx / n, mz = sz / n, my = sy / n;
+            const a = sxx / n - mx * mx + 1e-3, b = sxz / n - mx * mz, c = szz / n - mz * mz + 1e-3;
+            const u = sxy / n - mx * my, w = szy / n - mz * my, det = a * c - b * b;
+            if (Math.abs(det) < 1e-9) continue;
+            let gx = (u * c - b * w) / det, gz = (a * w - b * u) / det;
+            const gl = Math.hypot(gx, gz); if (gl > 0.35) { gx *= 0.35 / gl; gz *= 0.35 / gl; }
+            const c0 = my - gx * mx - gz * mz;
+            for (const j of g) { this.jgx[j] = gx; this.jgz[j] = gz; this.jy[j] = c0 + gx * (this.jx[j] - cx) + gz * (this.jz[j] - cz); this.jPlane[j] = 1; }
+        }
+    }
+    onPlaza(J, x, z) { const dx = x - this.jx[J], dz = z - this.jz[J], r = this.jr[J] + 0.5; return this.jPlane[J] === 1 && dx * dx + dz * dz < r * r; }
+    planeY(j, x, z) { return this.jy[j] + this.jgx[j] * (x - this.jx[j]) + this.jgz[j] * (z - this.jz[j]); }
+    // how much of edge e at s follows a junction plane (0..1); the junction in this._bj
+    blend(e, s) {
+        const a = this.eA[e], b = this.eB[e];
+        let w = 0, j = -1;
+        if (this.jPlane[a]) { const v = 1 - (s - this.jr[a]) / BLEND; if (v > w) { w = v; j = a; } }
+        if (this.jPlane[b]) { const v = 1 - (this.eLen[e] - s - this.jr[b]) / BLEND; if (v > w) { w = v; j = b; } }
+        this._bj = j;
+        return w > 1 ? 1 : w;
+    }
+    // the road surface of edge e at s, at the point (x, z) on it (centre-line height yc)
+    surfY(e, s, x, z, yc) { const w = this.blend(e, s); return w > 0 ? yc + (this.planeY(this._bj, x, z) - yc) * w : yc; }
 
     buildGrid() {
         const B = this.box;
@@ -106,7 +175,7 @@ export class Net {
     // edge, junc (junction id when in a junction's flat zone, else -1), lim (speed limit km/h). hint: prefer this edge on ties.
     query(x, z, hint, out) {
         const a = Math.floor((x - this.gx0) / CELL), b = Math.floor((z - this.gz0) / CELL);
-        let best = -1, bestE = 1e9, bt = 0;
+        let best = -1, bestE = 1e9, bt = 0, b2 = -1, b2E = 1e9, b2t = 0;
         const he = hint >= 0 && hint < this.n ? this.sE[hint] : -1;
         if (a >= 0 && b >= 0 && a < this.gnx && b < this.gnz) {
             const c = b * this.gnx + a, L = this.cellList;
@@ -120,12 +189,13 @@ export class Net {
                 const dist = Math.sqrt(qx * qx + qz * qz);
                 let ed = dist - this.eHw[this.sE[i]];
                 if (this.sE[i] === he) ed -= 0.05;
-                if (ed < bestE) { bestE = ed; best = i; bt = t; }
+                if (ed < bestE) { if (best >= 0 && this.sE[best] !== this.sE[i]) { b2 = best; b2E = bestE; b2t = bt; } bestE = ed; best = i; bt = t; }
+                else if (ed < b2E && this.sE[i] !== this.sE[best]) { b2E = ed; b2 = i; b2t = t; }
             }
         }
         if (best < 0) {   // nowhere near a road (should not happen inside the walls)
             out.i = 0; out.t = 0; out.s = 0; out.d = 1e3; out.y = this.groundAt(x, z); out.nx = 0; out.ny = 1; out.nz = 0;
-            out.hl = out.hr = 0; out.wall = 1e9; out.off = 2; out.lx = 1; out.lz = 0; out.fx = 0; out.fz = 1; out.edge = -1; out.junc = -1; out.lim = 50;
+            out.hl = out.hr = 0; out.wall = 1e9; out.off = 2; out.lx = 1; out.lz = 0; out.fx = 0; out.fz = 1; out.edge = -1; out.junc = -1; out.lim = 50; out.ov = 0;
             return out;
         }
         const i = best, e = this.sE[i];
@@ -140,6 +210,27 @@ export class Net {
         let dydd = 0, off = 0;
         let junc = this.sJ[i];
         if (junc >= 0) { const jx = x - this.jx[junc], jz = z - this.jz[junc]; if (jx * jx + jz * jz > (this.jr[junc] + 3) ** 2) junc = -1; }
+        if (junc < 0) {   // on the plaza of the junction at either end (drawn flat: no kerb there)
+            const A = this.eA[e], B = this.eB[e];
+            if (this.onPlaza(A, x, z)) junc = A; else if (this.onPlaza(B, x, z)) junc = B;
+        }
+        // near a junction: the junction's plane (the same surface the city draws)
+        const sAl = this.sS[i] + t * len, wj = this.blend(e, sAl);
+        let pgx = 0, pgz = 0;
+        if (wj > 0) { const J = this._bj; y += (this.planeY(J, x, z) - y) * wj; pgx = this.jgx[J] * wj; pgz = this.jgz[J] * wj; }
+        // on the asphalt of two streets at once, or of one within MERGE m of another's (carriageways closer than their
+        // widths, ways drawn over each other): one surface, weighted by how deep the point is in each, so it has no step
+        // where the nearer street changes (the city draws its asphalt at this height too)
+        let ov = 0;
+        if (bestE < 0 && b2E < MERGE && b2 >= 0 && junc < 0) {
+            ov = 1;
+            const i2 = b2, e2 = this.sE[i2], l2 = Math.hypot(this.px[i2 + 1] - this.px[i2], this.pz[i2 + 1] - this.pz[i2]) || 1;
+            let y2 = this.py[i2] + (this.py[i2 + 1] - this.py[i2]) * b2t;
+            const w2 = this.blend(e2, this.sS[i2] + b2t * l2);
+            if (w2 > 0) y2 += (this.planeY(this._bj, x, z) - y2) * w2;
+            const a1 = MERGE - bestE, a2 = MERGE - b2E;
+            y += (y2 - y) * a2 / (a1 + a2);
+        }
         const edge = d >= 0 ? d - hw : -d - hw;
         const pv = d >= 0 ? this.pl[i] + (this.pl[i + 1] - this.pl[i]) * t : this.pr[i] + (this.pr[i + 1] - this.pr[i]) * t;
         if (edge > 0 && junc < 0) {
@@ -153,12 +244,13 @@ export class Net {
         }
         out.wall = pv >= PAVE - 0.05 ? hw + WALL : 1e9;   // no wall where the pavement is shared with the next street
         const fx = sx / len, fz = sz / len;
-        let nx = dydd * fz - lz * slope, ny = lz * fx - lx * fz, nz = lx * slope - dydd * fx;
-        if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+        // surface gradient: the street's slope along it (fading into the plane), the kerb across it, the junction plane
+        const gX = slope * (1 - wj) * fx + dydd * lx + pgx, gZ = slope * (1 - wj) * fz + dydd * lz + pgz;
+        let nx = -gX, ny = 1, nz = -gZ;
         const nl = Math.hypot(nx, ny, nz) || 1;
         out.i = i; out.t = t; out.s = this.sS[i] + t * len; out.d = d; out.y = y; out.nx = nx / nl; out.ny = ny / nl; out.nz = nz / nl;
         out.hl = hw; out.hr = hw; out.off = off; out.lx = lx; out.lz = lz; out.fx = fx; out.fz = fz;
-        out.edge = e; out.junc = junc; out.lim = this.eLim[e];
+        out.edge = e; out.junc = junc; out.lim = this.eLim[e]; out.ov = ov;
         return out;
     }
 
@@ -174,7 +266,7 @@ export class Net {
         out.fx = fx / fl; out.fz = fz / fl; out.lx = out.fz; out.lz = -out.fx;
         out.x = this.px[i] + (this.px[j] - this.px[i]) * t + out.lx * d;
         out.z = this.pz[i] + (this.pz[j] - this.pz[i]) * t + out.lz * d;
-        out.y = this.py[i] + (this.py[j] - this.py[i]) * t;
+        out.y = this.surfY(e, s, out.x, out.z, this.py[i] + (this.py[j] - this.py[i]) * t);
         out.i = i; out.hw = this.eHw[e];
         return out;
     }

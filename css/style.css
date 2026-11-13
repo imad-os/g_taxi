@@ -88,3 +88,4 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .h-toast.bad { color: var(--red); } .h-toast.warn { color: var(--gold); } .h-toast.ok { color: var(--green); }
 [dir=rtl] .h-cash { left: auto; right: calc(var(--u) * 3.5); }
 [dir=rtl] .h-map, [dir=rtl] .h-area { right: auto; left: calc(var(--u) * 3.5); }
+.panel p.bugmsg { color: var(--gold); text-align: center; font-size: calc(var(--u) * 2.2); }

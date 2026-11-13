@@ -201,10 +201,11 @@ export class CityWorld {
         }
         // junction plazas: plain asphalt discs
         for (const j of c.jn) {
-            const r = net.jr[j] + 0.4, y = net.jy[j] + 0.012, N = 18;
+            const r = net.jr[j] + 0.4, y = net.jy[j] + 0.012, N = 18, P = net.jPlane[j];
+            const yAt = (x, z) => P ? net.planeY(j, x, z) + 0.012 : y;   // the junction's own plane (the car drives on it)
             const base = road.count;
-            road.vert(net.jx[j], y, net.jz[j], 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1);
-            for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2; road.vert(net.jx[j] + Math.cos(t) * r, y, net.jz[j] + Math.sin(t) * r, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
+            road.vert(net.jx[j], yAt(net.jx[j], net.jz[j]), net.jz[j], 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1);
+            for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2, vx = net.jx[j] + Math.cos(t) * r, vz = net.jz[j] + Math.sin(t) * r; road.vert(vx, yAt(vx, vz), vz, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
             for (let a = 0; a < N; a++) road.i.push(base, base + 2 + a, base + 1 + a);
         }
         // ---- ground (grid cells inside this square)
@@ -289,8 +290,10 @@ export class CityWorld {
     // one street run: samples i0..i1 of one edge (rows across: verge, pavement, kerb, asphalt ... mirrored)
     street(road, DS, detail, core, i0, i1, rnd) {
         const net = this.net, e = net.sE[i0], hw = net.eHw[e], cls = net.eCls[e], one = net.eOne[e];
-        const D = [0, 0, 0, hw, 0, -hw, 0, 0, 0];
-        const COLS = 9;
+        // across: verge, pavement, kerb, asphalt edge, half, centre, half, edge, kerb, pavement, verge (the halves let the
+        // asphalt follow the wheels' height where it overlaps another street)
+        const D = [0, 0, 0, hw, hw / 2, 0, -hw / 2, -hw, 0, 0, 0];
+        const COLS = 11;
         const base = road.count;
         const L = net.eLen[e], ja = net.eA[e], jb = net.eB[e];
         for (let i = i0; i <= i1; i++) {
@@ -303,12 +306,19 @@ export class CityWorld {
             // pavement on each side (narrower where another street runs alongside: then no kerb and no verge)
             const pl = net.pl[i], pr = net.pr[i], fullL = pl >= PAVE - 0.05, fullR = pr >= PAVE - 0.05;
             D[0] = hw + pl + (fullL ? VERGE : 0); D[1] = hw + pl; D[2] = hw + Math.min(0.35, pl);
-            D[6] = -hw - Math.min(0.35, pr); D[7] = -hw - pr; D[8] = -hw - pr - (fullR ? VERGE : 0);
+            D[8] = -hw - Math.min(0.35, pr); D[9] = -hw - pr; D[10] = -hw - pr - (fullR ? VERGE : 0);
             const kl = !junc && pl > 0.6 ? 0.15 : 0, kr = !junc && pr > 0.6 ? 0.15 : 0;
             for (let k = 0; k < COLS; k++) {
                 const d = D[k];
-                const yy = k === 0 ? (fullL ? -0.55 : kl) : k === 8 ? (fullR ? -0.55 : kr) : k === 1 || k === 2 ? kl : k === 6 || k === 7 ? kr : 0;
-                road.vert(x + lx * d, y + yy, z + lz * d, 0, 1, 0, 0, 0, 0);
+                const yy = k === 0 ? (fullL ? -0.55 : kl) : k === 10 ? (fullR ? -0.55 : kr) : k === 1 || k === 2 ? kl : k === 8 || k === 9 ? kr : 0;
+                let vy = net.surfY(e, s, x + lx * d, z + lz * d, y) + yy;
+                // asphalt is drawn at the height the wheels get there (net.query: where two streets' asphalt overlaps it
+                // blends them), so overlapping strips are one surface and the taxi does not sink into the higher one;
+                // a pavement or verge reaching onto another street's asphalt (or a junction) goes just under it
+                const q = net.query(x + lx * d, z + lz * d, -1, this.vq || (this.vq = {}));
+                if (k >= 3 && k <= 7) { if (q.edge >= 0 && q.off === 0 && q.junc < 0) vy = q.y; }
+                else if (q.edge >= 0 && q.edge !== e && q.off === 0) vy = Math.min(vy, q.y - 0.04);
+                road.vert(x + lx * d, vy, z + lz * d, 0, 1, 0, 0, 0, 0);
                 DS.push(d, s, hw, fl);
             }
             if (i > i0) {
@@ -321,15 +331,15 @@ export class CityWorld {
             // only where that side has its own pavement and the spot is clear of every street and junction
             // (a dual carriageway's other half or a crossing street can be closer than the pavement's width)
             const pl0 = net.pl[i], pr0 = net.pr[i];
-            if (cls <= 3 && i % 10 === 0 && pl0 > 1.4) { const d = hw + 0.9; if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, y + 0.15, z + lz * d, -lx, -lz); }
-            if (cls <= 3 && i % 10 === 5 && pr0 > 1.4) { const d = -(hw + 0.9); if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, y + 0.15, z + lz * d, lx, lz); }
+            if (cls <= 3 && i % 10 === 0 && pl0 > 1.4) { const d = hw + 0.9; if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, net.surfY(e, s, x + lx * d, z + lz * d, y) + 0.15, z + lz * d, -lx, -lz); }
+            if (cls <= 3 && i % 10 === 5 && pr0 > 1.4) { const d = -(hw + 0.9); if (this.clear(x + lx * d, z + lz * d, 0.6)) this.lamp(detail, x + lx * d, net.surfY(e, s, x + lx * d, z + lz * d, y) + 0.15, z + lz * d, lx, lz); }
             if (i % 6 === 3 && rnd() < (cls >= 4 ? 0.45 : 0.3)) {
                 const sg = rnd() < 0.5 ? 1 : -1, d = sg * (hw + PAVE - 0.7);
                 if ((sg > 0 ? pl0 : pr0) < PAVE - 0.05 || !this.clear(x + lx * d, z + lz * d, 1.6)) continue;
                 const sea = y < 9 && cls <= 2;
                 const kind = sea ? 'palm_tall' : rnd() < 0.5 ? 'tree' : 'tree_oak';
                 const sc = kind[0] === 'p' ? 0.5 + rnd() * 0.1 : kind === 'tree' ? 0.32 + rnd() * 0.08 : 0.4 + rnd() * 0.1;
-                detail.model(kind, 'body', x + lx * d, y + 0.15, z + lz * d, rnd() * 6.28, sc);
+                detail.model(kind, 'body', x + lx * d, net.surfY(e, s, x + lx * d, z + lz * d, y) + 0.15, z + lz * d, rnd() * 6.28, sc);
             }
         }
     }

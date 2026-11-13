@@ -3,9 +3,9 @@
 //   ZR accelerate (analog)   ZL brake / reverse (analog)   left stick or D-pad ◀ ▶ steer
 //   A  pick up / drop off / refuel / call help (the action shown on screen)     B  handbrake
 //   X  clutch (hold; "Manual + clutch" gearbox)     R  gear up     L  gear down     Y  camera
-//   D-pad ▲ ▼  speed limiter + / −                 +  pause menu
+//   D-pad ▲ ▼  speed limiter + / −                 +  pause menu      Capture (the square button)  report a bug
 // TV remote alone: ◀ ▶ steer, ▲ accelerate, ▼ brake / reverse, OK = the action, Back = pause menu.
-export const BTN = { A: 0, B: 1, X: 2, Y: 3, L: 4, R: 5, ZL: 6, ZR: 7, MINUS: 8, PLUS: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+export const BTN = { A: 0, B: 1, X: 2, Y: 3, L: 4, R: 5, ZL: 6, ZR: 7, MINUS: 8, PLUS: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15, CAPTURE: 17 };
 
 export class Input {
     constructor() {
@@ -59,6 +59,7 @@ export class Input {
         e.gearUp = tap('gu', this.btn(BTN.R) > 0.3, H[BTN.R] === 1);
         e.gearDown = tap('gd', this.btn(BTN.L) > 0.3, H[BTN.L] === 1);
         e.map = tap('map', this.btn(BTN.MINUS) > 0.3, H[BTN.MINUS] === 1);
+        e.capture = tap('cap', this.btn(BTN.CAPTURE) > 0.3, H[BTN.CAPTURE] === 1);
         H.fill(0); this.actHit = {};
     }
     clearHeld() { this.hit.fill(0); this.actHit = {}; for (const d in this.acts) this.acts[d] = {}; for (const d in this.pads) { this.pads[d].b.fill(0); this.pads[d].a.fill(0); } this.prev = {}; }
