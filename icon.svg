@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<rect width="256" height="256" rx="44" fill="#0e1a2b"/>
+<path d="M0 196h256v60H0z" fill="#26313f"/><path d="M20 222h40M100 222h40M180 222h40" stroke="#fff" stroke-width="6"/>
+<rect x="98" y="62" width="60" height="22" rx="5" fill="#f2c418"/><text x="128" y="79" font-family="Arial" font-weight="700" font-size="16" text-anchor="middle" fill="#0e1a2b">TAXI</text>
+<path d="M44 160l18-46c4-10 12-16 23-16h86c11 0 19 6 23 16l18 46v26H44z" fill="#1aa3c4"/>
+<path d="M74 118l10-18h88l10 18z" fill="#bfe7f3"/><path d="M44 150h168v10H44z" fill="#f2c418"/>
+<circle cx="82" cy="186" r="18" fill="#111"/><circle cx="174" cy="186" r="18" fill="#111"/><circle cx="82" cy="186" r="7" fill="#999"/><circle cx="174" cy="186" r="7" fill="#999"/>
+<rect x="52" y="138" width="22" height="10" rx="3" fill="#fff6c8"/><rect x="182" y="138" width="22" height="10" rx="3" fill="#fff6c8"/>
+</svg>

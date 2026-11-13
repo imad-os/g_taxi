@@ -1,0 +1,12 @@
+{
+  "mypc": 1,
+  "id": "tangier-taxi",
+  "name": "Tangier TAXI",
+  "description": "Drive a petit taxi through the real streets of Tangier: passengers, fares, traffic lights, fines, accidents, fuel and a manual gearbox",
+  "type": "game",
+  "entry": "index.html",
+  "icon": "icon.svg",
+  "version": "0.1.0",
+  "scores": true,
+  "config": { "orientation": "landscape" }
+}
