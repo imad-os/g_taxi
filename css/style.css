@@ -47,7 +47,9 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .h-warn { position: absolute; top: calc(var(--u) * 16); left: 0; right: 0; text-align: center; font-size: calc(var(--u) * 4); color: var(--red); font-weight: 700; opacity: 0; }
 .h-warn.on { opacity: 1; animation: blink .6s infinite; }
 @keyframes blink { 50% { opacity: .35; } }
-.h-map { position: absolute; top: calc(var(--u) * 3); right: calc(var(--u) * 3.5); width: calc(var(--u) * 26); height: calc(var(--u) * 26); border-radius: 50%; overflow: hidden;
+.h-area { position: absolute; top: calc(var(--u) * 2.2); right: calc(var(--u) * 3.5); width: calc(var(--u) * 26); text-align: center; font-size: calc(var(--u) * 2.4);
+  color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .03em; }
+.h-map { position: absolute; top: calc(var(--u) * 6); right: calc(var(--u) * 3.5); width: calc(var(--u) * 26); height: calc(var(--u) * 26); border-radius: 50%; overflow: hidden;
   border: calc(var(--u) * .5) solid rgba(255, 255, 255, .8); box-shadow: 0 0 calc(var(--u) * 2) rgba(0, 0, 0, .5); }
 .h-map canvas { width: 100%; height: 100%; display: block; }
 .h-dash { position: absolute; right: calc(var(--u) * 3.5); bottom: calc(var(--u) * 3); width: calc(var(--u) * 30); background: var(--panel); border-radius: calc(var(--u) * 1.6);
@@ -70,7 +72,7 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .h-prompt { position: absolute; left: 50%; bottom: calc(var(--u) * 6); transform: translateX(-50%); background: rgba(242, 196, 24, .95); color: #111; text-shadow: none;
   padding: calc(var(--u) * 1.2) calc(var(--u) * 3); border-radius: 99px; font-size: calc(var(--u) * 2.8); font-weight: 700; display: none; white-space: nowrap; }
 .h-prompt.on { display: block; }
-.h-cards { position: absolute; right: calc(var(--u) * 3.5); top: calc(var(--u) * 32); width: calc(var(--u) * 46); display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
+.h-cards { position: absolute; right: calc(var(--u) * 3.5); top: calc(var(--u) * 35); width: calc(var(--u) * 46); display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
 .h-card { background: var(--panel); border-radius: calc(var(--u) * 1.2); padding: calc(var(--u) * 1.2) calc(var(--u) * 2); border-left: calc(var(--u) * .8) solid #8fdcf0;
   font-size: calc(var(--u) * 2.1); animation: cardIn .3s ease-out; transition: opacity .4s, transform .4s; }
 .h-card.out { opacity: 0; transform: translateX(30%); }
@@ -85,4 +87,4 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .h-toast.on { opacity: 1; }
 .h-toast.bad { color: var(--red); } .h-toast.warn { color: var(--gold); } .h-toast.ok { color: var(--green); }
 [dir=rtl] .h-cash { left: auto; right: calc(var(--u) * 3.5); }
-[dir=rtl] .h-map { right: auto; left: calc(var(--u) * 3.5); }
+[dir=rtl] .h-map, [dir=rtl] .h-area { right: auto; left: calc(var(--u) * 3.5); }

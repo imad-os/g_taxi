@@ -277,16 +277,26 @@ export class CityWorld {
             if (junc || i === i1) continue;
             // street lights on the bigger streets, trees on the smaller ones, palms by the sea
             const yaw = Math.atan2(net.tx[i], net.tz[i]);
-            if (cls <= 3 && i % 10 === 0) { const d = hw + 0.9; detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw + Math.PI / 2, 1); }
-            if (cls <= 3 && i % 10 === 5) { const d = -(hw + 0.9); detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw - Math.PI / 2, 1); }
+            // only where that side has its own pavement and the spot is clear of every street and junction
+            // (a dual carriageway's other half or a crossing street can be closer than the pavement's width)
+            const pl0 = net.pl[i], pr0 = net.pr[i];
+            if (cls <= 3 && i % 10 === 0 && pl0 > 1.4) { const d = hw + 0.9; if (this.clear(x + lx * d, z + lz * d, 0.6)) detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw + Math.PI / 2, 1); }
+            if (cls <= 3 && i % 10 === 5 && pr0 > 1.4) { const d = -(hw + 0.9); if (this.clear(x + lx * d, z + lz * d, 0.6)) detail.model('light_modern', 'body', x + lx * d, y + 0.15, z + lz * d, yaw - Math.PI / 2, 1); }
             if (i % 6 === 3 && rnd() < (cls >= 4 ? 0.45 : 0.3)) {
                 const sg = rnd() < 0.5 ? 1 : -1, d = sg * (hw + PAVE - 0.7);
+                if ((sg > 0 ? pl0 : pr0) < PAVE - 0.05 || !this.clear(x + lx * d, z + lz * d, 1.6)) continue;
                 const sea = y < 9 && cls <= 2;
                 const kind = sea ? 'palm_tall' : rnd() < 0.5 ? 'tree' : 'tree_oak';
                 const sc = kind[0] === 'p' ? 0.5 + rnd() * 0.1 : kind === 'tree' ? 0.32 + rnd() * 0.08 : 0.4 + rnd() * 0.1;
                 detail.model(kind, 'body', x + lx * d, y + 0.15, z + lz * d, rnd() * 6.28, sc);
             }
         }
+    }
+
+    // nothing drivable within m metres of (x, z): no street's asphalt, no junction
+    clear(x, z, m) {
+        const q = this.net.query(x, z, -1, this.cq || (this.cq = {}));
+        return q.edge < 0 || (Math.abs(q.d) - q.hl >= m && q.junc < 0);
     }
 
     station(core, detail, s) {

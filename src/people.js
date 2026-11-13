@@ -47,10 +47,11 @@ export class People {
             this.pool.push({ g, body, arm });
         }
     }
-    update(dt, peds, camPos) {
+    // peds: the passengers' list (first), more: walkers (any left-over figures)
+    update(dt, peds, more, camPos) {
         for (let k = 0; k < this.pool.length; k++) {
-            const P = this.pool[k], p = peds[k];
-            if (!p || p.state === 'in' || p.state === 'gone' || Math.hypot(p.x - camPos.x, p.z - camPos.z) > 260) { P.g.visible = false; continue; }
+            const P = this.pool[k], p = k < peds.length ? peds[k] : more[k - peds.length];
+            if (!p || p.state === 'in' || p.state === 'gone' || p.live === false || Math.hypot(p.x - camPos.x, p.z - camPos.z) > 260) { P.g.visible = false; continue; }
             P.g.visible = true;
             if (P.body.geometry !== this.bodies[p.kind]) { P.body.geometry = this.bodies[p.kind]; P.arm.geometry = this.arms[p.kind]; }
             P.g.position.set(p.x, p.y, p.z);

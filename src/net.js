@@ -60,7 +60,7 @@ export class Net {
                 if (si < ra + 2) this.sJ[i] = r[3]; else if (s - si < rb + 2) this.sJ[i] = r[4];
             }
         }
-        this.lights = meta.lights; this.stations = meta.stations; this.names = meta.names;
+        this.lights = meta.lights; this.stations = meta.stations; this.names = meta.names; this.areas = meta.areas || [];
         // light index per junction (-1 = none) and the phase of each edge at it
         this.jLight = new Int32Array(NJ).fill(-1);
         for (let k = 0; k < this.lights.length; k++) this.jLight[this.lights[k].j] = k;
@@ -253,8 +253,18 @@ export class Net {
     slot(e, j) { return this.jEdges[j].indexOf(e); }
 
     // the street's name: Arabic for Arabic, else the name without its Arabic part (OSM often has both in one)
-    edgeName(e, lang) {
-        const n = this.names[this.eName[e]]; if (!n) return '';
+    edgeName(e, lang) { return this.nameText(this.eName[e], lang); }
+    // the area (quarter / neighbourhood) around (x, z): the nearest named place, bigger places reach further; '' far from all
+    areaName(x, z, lang) {
+        let best = -1, bd = 1e18;
+        for (let k = 0; k < this.areas.length; k++) {
+            const a = this.areas[k], d = Math.hypot(a[0] - x, a[1] - z) / a[3];
+            if (d < bd) { bd = d; best = k; }
+        }
+        return best >= 0 && bd < 1400 ? this.nameText(this.areas[best][2], lang) : '';
+    }
+    nameText(idx, lang) {
+        const n = this.names[idx]; if (!n) return '';
         if (lang === 'ar') return n[1] || n[0];
         return n[0].replace(/[\u0600-\u06FF\u0750-\u077F\u2D30-\u2D7F]+/g, '').replace(/\s+/g, ' ').trim() || n[0];
     }

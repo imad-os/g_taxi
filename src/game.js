@@ -11,6 +11,7 @@ import { CityWorld } from './city.js';
 import { Traffic, lightState } from './traffic.js';
 import { Taxi } from './taxi.js';
 import { People } from './people.js';
+import { Walkers } from './walkers.js';
 
 // the petit taxi: a 1.5 l diesel city saloon (real numbers: 66 kW, 200 Nm, 5 gears), Tangier's turquoise
 SPECS.taxi = { model: 'tr_taxi', cls: 'T', mass: 1180, power: 66, torque: 200, rpm: 4600, gears: [3.73, 2.05, 1.32, 0.97, 0.76], final: 4.21,
@@ -48,7 +49,8 @@ export class Shift {
         this.start(opts.start);
         this.traffic = new Traffic(this.scene, net, quality.tier === 'low' ? 9 : 13);
         this.all = [this.me].concat(this.traffic.cars);
-        this.people = new People(this.scene);
+        this.walkers = new Walkers(net, quality.tier === 'low' ? 8 : 16);
+        this.people = new People(this.scene, 8 + this.walkers.list.length);
         this.cam = new ChaseCam(16 / 9, far + 60);
         this.cam.shakeOn = quality.tier !== 'low';
         this.fx = new FX(this.scene, quality.tier, carMaterial(0x888888));
@@ -143,7 +145,8 @@ export class Shift {
             else fx.skids.add(w, 0, 0, 0, 0, 0, 0);
         }
         fx.update(dt);
-        this.people.update(dt, taxi.peds, this.cam.cam.position);
+        this.walkers.update(dt, v.px, v.pz, Math.atan2(v.R[6], v.R[8]));
+        this.people.update(dt, taxi.peds, this.walkers.list, this.cam.cam.position);
         this.cam.update(dt, me);
         // beacon over the destination
         const R = taxi.ride;

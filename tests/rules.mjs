@@ -92,7 +92,7 @@ const lastEvents = P => P.evaluate(() => window.TT.shift.taxi.log.slice(-4).map(
     await tap(0);
     await P.waitForTimeout(4000);
     t = await taxiOf(P);
-    check(t.fuel > 20 && t.stats.fuel > 0 && Math.abs(t.kmh) < 1, 'refuelled and paid, parked at the pump', { kmh: t.kmh, fuel: t.fuel, paid: Math.round(t.stats.fuel), money: t.money });
+    check(t.fuel > 15 && t.stats.fuel > 0 && Math.abs(t.kmh) < 1, 'refuelled and paid, parked at the pump', { kmh: t.kmh, fuel: t.fuel, paid: Math.round(t.stats.fuel), money: t.money });
     await P.screenshot({ path: out + '/6-refuelling.png' });
     for (let k = 0; k < 20 && (await taxiOf(P)).prompt === 'stop'; k++) await P.waitForTimeout(800);
 

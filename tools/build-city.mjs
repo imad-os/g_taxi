@@ -363,11 +363,22 @@ fs.writeFileSync('assets/city/ground.bin', Buffer.concat([Buffer.from(head.buffe
 // buildings: count, then per building: n, h, y, n x (x, z)   (Float32)
 const bf = []; for (const b of blds) { bf.push(b.p.length, +b.h.toFixed(1), +b.y.toFixed(2)); for (const p of b.p) bf.push(+p[0].toFixed(2), +p[1].toFixed(2)); }
 fs.writeFileSync('assets/city/bld.bin', Buffer.from(new Float32Array(bf).buffer));
+// named areas (quarters, neighbourhoods, suburbs, villages) for the map: osm/places.json from the GitHub Action
+const RANK = { neighbourhood: 1, quarter: 1.15, locality: 1, hamlet: 1, suburb: 1.3, village: 1.3 };
+const areas = [];
+if (fs.existsSync('osm/places.json')) {
+    for (const p of JSON.parse(fs.readFileSync('osm/places.json', 'utf8')).places) {
+        const q = toXY(p.lat, p.lon);
+        if (q.x < BOX.x0 || q.x > BOX.x1 || q.z < BOX.z0 || q.z > BOX.z1 || !RANK[p.k]) continue;
+        areas.push([Math.round(q.x), Math.round(q.z), nameOf(p.n, p.nar), RANK[p.k]]);
+    }
+}
+console.log('areas', areas.length);
 const index = {
     license: 'Roads and building footprints: (c) OpenStreetMap contributors, ODbL 1.0. Heights: AWS Terrain Tiles.',
     box: BOX, step: STEP, pave: PAVE, samples: NS, buildings: blds.length,
     edges: eIdx, junctions: JL.map(j => [+j.x.toFixed(2), +j.z.toFixed(2), +j.r.toFixed(2), +field(j.x, j.z).toFixed(2)]),
-    lights, stations, names
+    lights, stations, areas, names
 };
 fs.writeFileSync('assets/city/city.json', JSON.stringify(index));
 let km = 0; for (const e of E) km += (e.pts.length - 1) * STEP / 1000;

@@ -19,7 +19,7 @@ export class Hud {
         this.cash = el('h-cash', r); this.cashV = el('v', this.cash); this.rides = el('s', this.cash);
         this.sign = el('h-sign', r); this.signV = el('n', this.sign); this.street = el('h-street', r);
         this.warn = el('h-warn', r);
-        const mp = el('h-map', r); this.mapC = el('', mp, 'canvas'); this.mapC.width = this.mapC.height = 260; this.mapX = this.mapC.getContext('2d');
+        this.area = el('h-area', r); const mp = el('h-map', r); this.mapC = el('', mp, 'canvas'); this.mapC.width = this.mapC.height = 260; this.mapX = this.mapC.getContext('2d');
         this.dash = el('h-dash', r);
         this.spd = el('spd', this.dash); this.unit = el('unit', this.dash); this.unit.textContent = 'km/h';
         this.gear = el('gear', this.dash); this.rpm = el('rpm', this.dash); this.rpmB = el('b', this.rpm);
@@ -77,6 +77,7 @@ export class Hud {
         this.set(this.signV, 'lim', lim ? String(lim) : '');
         this.sign.style.display = lim ? '' : 'none';
         this.set(this.street, 'street', q.edge >= 0 ? S.net.edgeName(q.edge, I18n.lang) : '');
+        if ((this.areaT = (this.areaT || 0) - step) <= 0) { this.areaT = 0.5; this.set(this.area, 'area', S.net.areaName(v.px, v.pz, I18n.lang)); }
         const w = T.wrongNow ? I18n.t('wrongWay') : T.speeding ? I18n.t('slowDown') : v.stalled ? I18n.t('stalled') : '';
         this.set(this.warn, 'warn', w); this.warn.className = 'h-warn' + (w ? ' on' : '');
         // dash

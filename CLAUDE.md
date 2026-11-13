@@ -35,7 +35,10 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   `city.json` (streets `[id, off, n, a, b, hw, cls, oneway, roundabout, limit, name, bridge]`, junctions, traffic lights,
   fuel stations, names), `net.bin` (a sample every 4 m), `side.bin` (pavement width per side, narrowed where two roads
   touch), `ground.bin`, `bld.bin`. `node tools/build-city.mjs --plot out.png` draws the network. Speed limits: OSM
-  `maxspeed`, else by class (80 / 60 / 60 / 50 / 40 / 40, roundabouts 40).
+  `maxspeed`, else by class (80 / 60 / 60 / 50 / 40 / 40, roundabouts 40). Area names (the label above the GPS map) and
+  OSM fuel stations: `osm/places.json`, written by the GitHub Action `.github/workflows/places.yml` (`tools/osm-places.mjs`; runs
+  when that file changes or by hand; the cloud container cannot reach Overpass). Street lamps and trees go only on a pavement
+  of their own, clear of every street and junction (`CityWorld.clear`); walkers (`src/walkers.js`) keep to such pavements too.
 - Code: `src/net.js` (the network: query under a car, routes with one-way rules), `src/city.js` (streamed 200 m chunks,
   merged meshes), `src/traffic.js` (AI cars, lights), `src/taxi.js` (money, fares, fines, accidents, fuel, passengers; pure
   logic), `src/game.js` (the shift), `src/hud.js`, `src/ui.js`, `src/input.js`, `src/main.js` (My PC lifecycle).
@@ -47,7 +50,8 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   (pick up, drop off, refuel, help), Y camera, + / Back = pause.
 - Browser checks (Playwright, SDK from a My PC checkout `SDK=/path/to/g/sdk/mypc-sdk.js`; dev URL `?dev&fresh[&gear=manual|clutch][&x=&z=]`):
   `node tests/drive.mjs <folder>` (drive + pick-up, screenshots, fps) and `node tests/rules.mjs <folder>` (whole ride,
-  speeding, crash card, refuel, roadside help, clutch stall / pull away / 2nd gear; must print "all passed").
+  speeding, crash card, refuel, roadside help, clutch stall / pull away / 2nd gear; must print "all passed"),
+  `node tests/walkers.mjs <folder>` (people walk, none on the asphalt).
   The cloud has no GPU (~10 fps): fps proof belongs on the owner's PC.
 
 ## Stage 2 (planned)
