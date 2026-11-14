@@ -202,10 +202,11 @@ export class Vehicle {
     // slip = body slip angle (rad): extra lock to catch a slide; drift = handbrake held (full speed lock, for countersteer)
     lockAt(fwd, slip = 0, drift = false) {
         const sp = this.spec, v = Math.max(0, fwd);
-        const lock = sp.steer / (1 + v * 0.035);
+        // steerFade / steerSlack: optional per car (Tangier TAXI's tighter city steering); Asphalt's cars use the defaults
+        const lock = sp.steer / (1 + v * (sp.steerFade ?? 0.035));
         if (drift) return lock;
         const wb = Math.max(1.5, this.wheels[0].mz - this.wheels[2].mz);
-        return Math.min(lock, Math.atan(wb * sp.mu * G / Math.max(1, v * v)) + 0.13 + slip);
+        return Math.min(lock, Math.atan(wb * sp.mu * G / Math.max(1, v * v)) + (sp.steerSlack ?? 0.13) + slip);
     }
     step(dt, track, q) {
         const sp = this.spec, R = this.R, inp = this.input;
@@ -220,7 +221,7 @@ export class Vehicle {
         // turns (grip lock = wheelbase x mu g / v^2), plus the body's slip angle so a slide can still be caught
         const lock = this.lockAt(fwd, Math.abs(Math.atan2(this.latSpeed, Math.max(1, Math.abs(fwd)))), inp.handbrake > 0);
         const target = inp.steer * lock;
-        const rate = 2.6 * dt;
+        const rate = (sp.steerRate ?? 2.6) * dt;
         this.steerNow += Math.max(-rate, Math.min(rate, target - this.steerNow));
 
         // gearbox (automatic, with reverse when stopped and braking)

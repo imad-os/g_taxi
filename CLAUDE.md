@@ -83,7 +83,10 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - **0.4.1 (owner requests 2026-11-14)**: four levels in `src/level.js`: **Easy** (new, the gentlest), **Normal** (default) = 0.4.0's
   Easy, **Hard** = 0.4.0's Normal, **Real life** = 0.4.0's Hard = the game as in 0.3.0. `pay` = the share of every fine, repair, injury
   cost and late / bump pay cut (`Taxi.cost`): 25 / 40 / 60 / 100 %. A saved 0.4.0 `hard` becomes `real` (settings `lv: 2`).
-  `tests/rules.mjs` runs on Real life.
+  `tests/rules.mjs` runs on Real life. **0.4.2**: fines alone = `fine` 6 / 10 / 15 / 100 % (owner: "make them 1/4", Real life kept full).
+- **Steering (owner request 2026-11-14, 0.4.2: tight turns)**: the taxi cars set `steer` 0.7, `steerFade` 0.02, `steerSlack` 0.22,
+  `steerRate` 3.6 (additive spec fields read by `core/src/vehicle.js` `lockAt` / the wheel rate; Asphalt keeps 0.035 / 0.13 / 2.6).
+  Lock at 20 / 40 km/h: 36° / 26° (was 30° / 21°). Stick curve ^1.2 (was 1.5), D-pad ramps in ~0.1 s. `node tests/steer.mjs [car] [dir]`.
 - **Road bot (owner request 2026-11-14)**: `src/roadbot.js` (dev only, `?dev&bot`) drives by itself and logs road problems (cut routes,
   holes, grass on the asphalt, height mismatches, off-road turns, stuck spots, kinks, bumps) with a picture each.
   **`node tools/roadbot.mjs <out> --minutes 20`** writes report.md / report.json / shots / map.png. How to run it and the fixing loop:

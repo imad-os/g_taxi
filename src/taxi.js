@@ -46,8 +46,10 @@ export class Taxi {
     toast(text, kind) { this.toasts.push({ text, kind: kind || 'info', t: 0 }); }
     // a fine or a cost at this level's share (level.js `pay`: Real life = the full amount), rounded to 10 DH
     cost(dh) { return Math.max(10, Math.round(dh * (this.level.pay ?? 1) / 10) * 10); }
+    // fines only: level.js `fine` (owner 2026-11-14: a quarter of 0.4.1's on Easy / Normal / Hard; Real life = full)
+    fineCost(dh) { return Math.max(10, Math.round(dh * (this.level.fine ?? 1) / 10) * 10); }
     fine(kind, amount, detail) {
-        amount = this.cost(amount);
+        amount = this.fineCost(amount);
         this.pay(-amount, 'fines');
         if (this.ride) this.ride.fines++;
         this.events.push({ kind: 'fine', title: 'fine_' + kind, lines: [[detail || '', -amount]], total: -amount });
@@ -282,7 +284,7 @@ export class Taxi {
 
     // the taxi ran into a person on foot: always the driver's fault, always paid
     hitPed(kmh) {
-        const hurt = this.cost(800 + kmh * 60), ff = this.cost(FINES.fault);
+        const hurt = this.cost(800 + kmh * 60), ff = this.fineCost(FINES.fault);
         const lines = [['impact:' + Math.round(kmh), 0], ['pedHurt', -hurt], ['fineFault', -ff]];
         const total = -hurt - ff;
         this.money += total; this.stats.repairs += hurt; this.stats.fines += ff; this.dirty = true;
@@ -307,7 +309,7 @@ export class Taxi {
         const kmh = Math.round(c.rel * 3.6);
         const fault = c.wall || c.fault || this.time - this.redT < 4;
         const lines = [['impact:' + kmh, 0]];
-        const own = this.cost(Math.min(14000, c.rel * c.rel * 18)), ff = this.cost(FINES.fault);
+        const own = this.cost(Math.min(14000, c.rel * c.rel * 18)), ff = this.fineCost(FINES.fault);
         let total = 0;
         if (fault) { lines.push(['repairOwn', -own]); total -= own; }
         else lines.push(['repairInsured', 0]);

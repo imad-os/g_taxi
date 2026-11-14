@@ -40,8 +40,8 @@ export class Input {
         ax = Math.abs(ax) > this.dead ? (ax - Math.sign(ax) * this.dead) / (1 - this.dead) : 0;
         const digital = (this.btn(BTN.LEFT) > 0 || this.act('left') ? 1 : 0) - (this.btn(BTN.RIGHT) > 0 || this.act('right') ? 1 : 0);
         // + = left (the car's frame); the stick gets a gentle curve, the D-pad / arrows ramp in so a tap is a small turn
-        if (digital) { this.steerNow += (digital - this.steerNow) * Math.min(1, dt * 5); c.steer = this.steerNow; }
-        else { this.steerNow = 0; c.steer = -Math.sign(ax) * Math.pow(Math.abs(ax), 1.5); }
+        if (digital) { this.steerNow += (digital - this.steerNow) * Math.min(1, dt * 9); c.steer = this.steerNow; }
+        else { this.steerNow = 0; c.steer = -Math.sign(ax) * Math.pow(Math.abs(ax), 1.2); }
         c.throttle = Math.max(this.btn(BTN.ZR), this.act('up'));
         c.brake = Math.max(this.btn(BTN.ZL), this.act('down'));
         c.handbrake = this.btn(BTN.B) > 0.3 ? 1 : 0;

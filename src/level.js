@@ -6,12 +6,13 @@
 //   time: the time a passenger allows = route m / speed (m/s) + extra s
 //   see:  how far a police officer sees the taxi (m)   tol: km/h over the limit before a camera or officer fines
 //   traffic: share of the usual number of other cars (fewer cars = fewer accidents)
-//   pay: share of every fine, repair, injury cost and late / bump pay cut (Real life = the full Moroccan amounts)
+//   fine: share of every fine (owner 2026-11-14: a quarter of `pay` below Real life)
+//   pay: share of every repair, injury cost and late / bump pay cut (Real life = the full Moroccan amounts)
 export const LEVELS = {
-    easy:   { trip: [0.3, 0.8, 0.06, 2.0], time: [6.0, 90], see: 30, tol: 20, traffic: 0.4,  pay: 0.25 },
-    normal: { trip: [0.4, 1.0, 0.08, 2.5], time: [6.5, 70], see: 45, tol: 15, traffic: 0.55, pay: 0.4 },
-    hard:   { trip: [0.5, 1.3, 0.12, 3.5], time: [7.4, 55], see: 70, tol: 10, traffic: 0.8,  pay: 0.6 },
-    real:   { trip: [0.8, 1.8, 0.15, 4.5], time: [8.2, 45], see: 90, tol: 5,  traffic: 1,    pay: 1 }
+    easy:   { trip: [0.3, 0.8, 0.06, 2.0], time: [6.0, 90], see: 30, tol: 20, traffic: 0.4,  pay: 0.25, fine: 0.0625 },
+    normal: { trip: [0.4, 1.0, 0.08, 2.5], time: [6.5, 70], see: 45, tol: 15, traffic: 0.55, pay: 0.4,  fine: 0.1 },
+    hard:   { trip: [0.5, 1.3, 0.12, 3.5], time: [7.4, 55], see: 70, tol: 10, traffic: 0.8,  pay: 0.6,  fine: 0.15 },
+    real:   { trip: [0.8, 1.8, 0.15, 4.5], time: [8.2, 45], see: 90, tol: 5,  traffic: 1,    pay: 1,    fine: 1 }
 };
 export const LEVEL_IDS = ['easy', 'normal', 'hard', 'real'];
 export const levelOf = (id) => LEVELS[id] || LEVELS.normal;

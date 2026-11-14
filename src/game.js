@@ -26,6 +26,9 @@ export const TAXI_PAINT = 0x1aa3c4, TAXI_ROOF = 0xf2c418;
 export const CARS = ['taxi', 'city', 'hatch'];
 SPECS.taxi_city = Object.assign({}, SPECS.city, { cls: 'T', nitro: 0 });
 SPECS.taxi_hatch = Object.assign({}, SPECS.hatch, { cls: 'T', nitro: 0 });
+// city steering (owner request 2026-11-14: "make it better to turn the tight turns"): more lock (40°), less taken away with
+// speed, a little more than the strict grip limit, and a quicker wheel (core/src/vehicle.js lockAt: steerFade / steerSlack / steerRate)
+for (const k of ['taxi', 'taxi_city', 'taxi_hatch']) Object.assign(SPECS[k], { steer: 0.7, steerFade: 0.02, steerSlack: 0.22, steerRate: 3.6 });
 const specOf = car => car === 'city' ? SPECS.taxi_city : car === 'hatch' ? SPECS.taxi_hatch : SPECS.taxi;
 
 export function setDay() {
