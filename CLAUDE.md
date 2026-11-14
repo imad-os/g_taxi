@@ -68,6 +68,15 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   height (net.query) vs the drawn height (a ray on the road meshes), a 9 x 9 grid of those around the car, the street /
   junction, camera, events, and a 960 px JPEG of the frame. Saved in My PC's Firestore `bugs` (public read, 30 days).
   **When imad says "check the logs": `node tools/bugs.mjs [n] [id]`** (saves `bugs/<id>/report.json` + `shot.jpg`, not committed).
+- **0.4.0 (owner requests 2026-11-14)**: Settings menu (title + pause) holds every setting: Car, Gearbox, Difficulty, Route arrows,
+  HUD size, (in a shift) Speed limiter; a new car or difficulty restarts the shift when leaving it. **Difficulty** (`src/level.js`,
+  default Normal, **Hard = the game as in 0.3.0**): trip length grows with rides paid (`tripRange`), time allowed, police sight
+  (45 / 70 / 90 m), camera / police tolerance (+15 / +10 / +5 km/h), traffic (55 / 80 / 100 %). **Route arrows** (`src/guide.js`,
+  optional): green arrows on the road along the route (to 30 m past the first turn) + the next-turn sign (left / right / U-turn /
+  arrive, distance, street). **Gauges** (`src/gauges.js`): rev counter (gear, fuel arc), speedometer (digital speed), lights
+  P / ENG / FUEL / C / LIM / TAXI (green free, red occupied). **HUD size** small / normal / large / xl = `--hs` 1 / 1.2 / 1.4 / 1.65
+  on `.hud` (every HUD size is in `--u`). Capture = any button from 17 up; Controls has a button test (the last button's number).
+  Test: `node tests/v040.mjs <folder>`.
 - Road surface: where two streets' asphalt overlaps (or is within `MERGE` = 2.5 m), `net.query` blends their heights by depth,
   and `city.js` draws every asphalt vertex (5 columns across) at `net.query`'s height; a pavement / verge reaching onto
   another street's asphalt goes 4 cm under it. Junctions with 3+ streets: one fitted plane (`fitJunctions`, `BLEND` 12 m).

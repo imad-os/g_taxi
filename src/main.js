@@ -14,7 +14,7 @@ const STEP = 1 / 60;
 const App = {
     renderer: null, canvas: null, info: null, quality: null, net: null,
     input: new Input(), shift: null, hud: null, ui: null, sound: null,
-    raf: 0, last: 0, acc: 0, state: 'boot', paused: false, saved: null, settings: { gearbox: 'auto', car: 'taxi' },
+    raf: 0, last: 0, acc: 0, state: 'boot', paused: false, saved: null, settings: { gearbox: 'auto', car: 'taxi', level: 'normal', arrows: true, hud: 'normal' },
     fpsLog: [], workLog: [], saveT: 0
 };
 window.TT = App;   // for the browser checks (tests/)
@@ -56,6 +56,11 @@ function stopLoop() { if (App.raf) cancelAnimationFrame(App.raf); App.raf = 0; }
 function update(dt) {
     App.input.poll(dt);
     if (App.input.edge.capture && App.shift && (App.state === 'drive' || App.state === 'pause')) App.capture = 'capture';
+    // Controls > button test: the last controller button pressed (finds the Capture button's number on any system)
+    if (App.ui.screen === 'controls' && App.input.btnSeen !== App.btnShown) {
+        App.btnShown = App.input.btnSeen; const b = App.ui.root.querySelector('.btest b');
+        if (b) b.textContent = I18n.t('btnSeen', App.input.lastBtn) + (MyPC.gamepad && MyPC.gamepad.label ? ' (' + MyPC.gamepad.label(App.input.lastBtn) + ')' : '');
+    }
     if (App.state === 'drive' && App.shift) {
         App.shift.update(dt, App.input);
         App.hud.update(dt, App.input);
@@ -89,12 +94,15 @@ function sendBug(from) {
 }
 App.reportBug = () => { App.capture = 'menu'; };
 
+// Settings > HUD size: every box and text of the HUD (and the gauges) scales with --hs
+export const HUD_SIZES = { small: 1, normal: 1.2, large: 1.4, xl: 1.65 };
+App.applyHud = () => { App.hud && App.hud.root.style.setProperty('--hs', HUD_SIZES[App.settings.hud] || 1.2); };
 App.saveSettings = () => MyPC.save('settings', App.settings);
 App.applyGear = () => { if (!App.shift) return; const v = App.shift.me.veh, g = App.settings.gearbox; v.gearbox = g === 'auto' ? null : g; v.mgear = 1; v.stalled = false; };
 App.startShift = function (keep) {
     App.ui.hide();
     if (App.shift) { if (!keep) save(); App.shift.dispose(); App.shift = null; }
-    const shift = new Shift(App.renderer, App.net, App.quality, { gearbox: App.settings.gearbox, car: App.settings.car, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
+    const shift = new Shift(App.renderer, App.net, App.quality, { gearbox: App.settings.gearbox, car: App.settings.car, level: App.settings.level, arrows: App.settings.arrows, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
     shift.onScale = () => resize();
     shift.onSound = (k, r, x) => App.sound.event(k, r, x, shift);
     App.shift = shift;
@@ -136,8 +144,9 @@ MyPC.init({
             await loadModels(p => MyPC.progress(p * 0.6));
             App.net = await Net.load(p => MyPC.progress(0.6 + p * 0.35));
             App.saved = MyPC.load('taxi', null);
-            App.settings = Object.assign({ gearbox: 'auto', car: 'taxi' }, MyPC.load('settings', null));
+            App.settings = Object.assign({ gearbox: 'auto', car: 'taxi', level: 'normal', arrows: true, hud: 'normal' }, MyPC.load('settings', null));
             App.hud = new Hud(document.getElementById('hud'));
+            App.applyHud();
             App.sound = new Sound(info.volume || { music: 0.7, sfx: 0.8 });
             App.ui = new UI(App, document.getElementById('ui'));
             App.input.menuCb = (a, dev, rep) => {
@@ -158,6 +167,8 @@ MyPC.init({
         if (P.has('dev')) {   // test hook: ?dev[&gear=manual|clutch][&x=..&z=..][&fresh]
             if (P.get('gear')) App.settings.gearbox = P.get('gear');
             if (P.get('car')) App.settings.car = P.get('car');
+            if (P.get('level')) App.settings.level = P.get('level');
+            if (P.get('hud')) { App.settings.hud = P.get('hud'); App.applyHud(); }
             if (P.has('fresh')) App.saved = null;
             if (P.has('x')) App.saved = Object.assign({}, App.saved, { at: { x: +P.get('x'), z: +P.get('z') } });
             App.startShift();

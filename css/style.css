@@ -21,6 +21,7 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .btn { display: inline-block; color: #fff; background: rgba(255, 255, 255, .08); border: 1px solid var(--line); padding: calc(var(--u) * 1.3) calc(var(--u) * 3.2);
   font-size: calc(var(--u) * 2.8); font-weight: 600; margin: calc(var(--u) * .7) 0; border-radius: calc(var(--u) * 1); min-width: calc(var(--u) * 40); }
 .btn b { color: var(--gold); }
+.btn.row { display: flex; justify-content: space-between; gap: calc(var(--u) * 3); }
 .btn.go { background: linear-gradient(90deg, var(--taxi), #128aa6); border: 0; }
 .focus { outline: calc(var(--u) * 0.6) solid var(--gold); outline-offset: calc(var(--u) * 0.3); }
 .panel { position: absolute; inset: calc(var(--u) * 8) calc(var(--u) * 20); background: var(--panel); border: 1px solid var(--line); border-radius: calc(var(--u) * 2);
@@ -35,7 +36,7 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .stats .st { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: calc(var(--u) * .4); }
 
 /* ---------- driving ---------- */
-.hud { position: fixed; inset: 0; z-index: 3; pointer-events: none; display: none; font-weight: 600; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
+.hud { --u: calc(100vh / 108 * var(--hs, 1.2)); position: fixed; inset: 0; z-index: 3; pointer-events: none; display: none; font-weight: 600; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
 .h-cash { position: absolute; top: calc(var(--u) * 3); left: calc(var(--u) * 3.5); background: var(--panel); border-radius: calc(var(--u) * 1.2); padding: calc(var(--u) * 1) calc(var(--u) * 2.2); }
 .h-cash .v { font-size: calc(var(--u) * 3.6); color: var(--gold); }
 .h-cash .v.neg { color: var(--red); }
@@ -52,19 +53,6 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .h-map { position: absolute; top: calc(var(--u) * 6); right: calc(var(--u) * 3.5); width: calc(var(--u) * 26); height: calc(var(--u) * 26); border-radius: 50%; overflow: hidden;
   border: calc(var(--u) * .5) solid rgba(255, 255, 255, .8); box-shadow: 0 0 calc(var(--u) * 2) rgba(0, 0, 0, .5); }
 .h-map canvas { width: 100%; height: 100%; display: block; }
-.h-dash { position: absolute; right: calc(var(--u) * 3.5); bottom: calc(var(--u) * 3); width: calc(var(--u) * 30); background: var(--panel); border-radius: calc(var(--u) * 1.6);
-  padding: calc(var(--u) * 1.2) calc(var(--u) * 2.2); display: grid; grid-template-columns: 1fr auto; align-items: end; row-gap: calc(var(--u) * .6); }
-.h-dash .spd { font-size: calc(var(--u) * 7); line-height: 1; font-weight: 700; }
-.h-dash .spd.over { color: var(--red); }
-.h-dash .unit { font-size: calc(var(--u) * 2); opacity: .7; grid-row: 2; }
-.h-dash .gear { grid-column: 2; grid-row: 1; font-size: calc(var(--u) * 5.2); color: var(--gold); }
-.h-dash .rpm, .h-dash .fuel { grid-column: 1 / 3; height: calc(var(--u) * 1); background: rgba(255, 255, 255, .15); border-radius: 99px; overflow: hidden; }
-.h-dash .rpm .b, .h-dash .fuel .b { height: 100%; background: #8fdcf0; transform-origin: left; }
-.h-dash .rpm .b.red { background: var(--red); }
-.h-dash .fuel .b { background: #3ad07a; }
-.h-dash .fuel .b.low { background: var(--red); }
-.h-dash .t { font-size: calc(var(--u) * 2); }
-.h-dash .lim { grid-column: 2; font-size: calc(var(--u) * 2.2); color: var(--gold); text-align: right; }
 .h-ride { position: absolute; left: calc(var(--u) * 3.5); bottom: calc(var(--u) * 3); background: var(--panel); border-left: calc(var(--u) * .8) solid var(--green); border-radius: calc(var(--u) * 1.2);
   padding: calc(var(--u) * 1.2) calc(var(--u) * 2.2); font-size: calc(var(--u) * 2.5); white-space: pre-line; line-height: 1.4; display: none; max-width: calc(var(--u) * 50); }
 .h-ride.on { display: block; }
@@ -90,3 +78,14 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 [dir=rtl] .h-map, [dir=rtl] .h-area { right: auto; left: calc(var(--u) * 3.5); }
 .panel p.bugmsg { color: var(--gold); text-align: center; font-size: calc(var(--u) * 2.2); }
 .panel.pause > * { flex-shrink: 0; }
+
+/* HUD size (Settings > HUD size): --hs on .hud scales every HUD box and text */
+.h-gauges { position: absolute; right: calc(var(--u) * 2); bottom: calc(var(--u) * 1.5); width: calc(var(--u) * 42); height: calc(var(--u) * 23); }
+.h-turn { position: absolute; top: calc(var(--u) * 12); left: calc(var(--u) * 3.5); background: var(--panel); border-radius: calc(var(--u) * 1.2); padding: calc(var(--u) * 1) calc(var(--u) * 2) calc(var(--u) * 1) calc(var(--u) * 1);
+  display: none; grid-template-columns: auto 1fr; column-gap: calc(var(--u) * 1.2); align-items: center; max-width: calc(var(--u) * 40); border-left: calc(var(--u) * .8) solid var(--green); }
+.h-turn.on { display: grid; }
+.h-turn.near { background: rgba(20, 90, 50, .9); }
+.h-turn canvas { grid-row: 1 / 3; width: calc(var(--u) * 7); height: calc(var(--u) * 7); }
+.h-turn .d { font-size: calc(var(--u) * 2.6); font-weight: 700; }
+.h-turn .n { font-size: calc(var(--u) * 2); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+[dir=rtl] .h-turn { left: auto; right: calc(var(--u) * 3.5); }

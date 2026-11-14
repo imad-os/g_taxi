@@ -27,7 +27,7 @@ export class Input {
         if (!pad) { (this.acts[dev] || (this.acts[dev] = {}))[action] = pressed; if (pressed) this.actHit[action] = 1; }
         if (pressed && this.menuCb) this.menuCb(action, dev, false);
     }
-    onButton(i, pressed, value, dev) { this.pad(dev).b[i] = pressed ? Math.max(0.01, value || 1) : 0; if (pressed && i < 24) this.hit[i] = 1; }
+    onButton(i, pressed, value, dev) { this.pad(dev).b[i] = pressed ? Math.max(0.01, value || 1) : 0; if (pressed && i < 24) this.hit[i] = 1; if (pressed) { this.lastBtn = i; this.btnSeen = (this.btnSeen || 0) + 1; } }
     onAxes(axes, dev) { const p = this.pad(dev); for (let k = 0; k < 4 && k < axes.length; k++) p.a[k] = axes[k]; }
     btn(i) { let v = 0; for (const d in this.pads) { const x = this.pads[d].b[i]; if (x > v) v = x; } return v; }
     axis(k) { let v = 0; for (const d in this.pads) { const x = this.pads[d].a[k]; if (Math.abs(x) > Math.abs(v)) v = x; } return v; }
@@ -59,7 +59,9 @@ export class Input {
         e.gearUp = tap('gu', this.btn(BTN.R) > 0.3, H[BTN.R] === 1);
         e.gearDown = tap('gd', this.btn(BTN.L) > 0.3, H[BTN.L] === 1);
         e.map = tap('map', this.btn(BTN.MINUS) > 0.3, H[BTN.MINUS] === 1);
-        e.capture = tap('cap', this.btn(BTN.CAPTURE) > 0.3, H[BTN.CAPTURE] === 1);
+        // Capture: 17 on a Switch Pro in Chrome; some systems number it higher, so any button from 17 up (16 = Home is My PC's)
+        let capH = false, capT = false; for (let b = BTN.CAPTURE; b < 24; b++) { if (this.btn(b) > 0.3) capH = true; if (H[b] === 1) capT = true; }
+        e.capture = tap('cap', capH, capT);
         H.fill(0); this.actHit = {};
     }
     clearHeld() { this.hit.fill(0); this.actHit = {}; for (const d in this.acts) this.acts[d] = {}; for (const d in this.pads) { this.pads[d].b.fill(0); this.pads[d].a.fill(0); } this.prev = {}; }

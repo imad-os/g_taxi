@@ -44,9 +44,9 @@ export class Enforce {
             }
         }
     }
-    // the nearest officer within POLICE_SEES of (x, z), or null
-    officer(x, z) {
-        let best = null, bd = POLICE_SEES * POLICE_SEES;
+    // the nearest officer within `see` m (POLICE_SEES on Hard) of (x, z), or null
+    officer(x, z, see) {
+        let best = null, bd = (see || POLICE_SEES) ** 2;
         for (const p of this.police) { const d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z); if (d < bd) { bd = d; best = p; } }
         return best;
     }

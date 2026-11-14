@@ -11,12 +11,15 @@ export const FARE = { flag: 7, km: 4 };   // DH: pick-up + per km on the meter
 export const FINES = { red: 700, wrong: 700, pave: 500, fault: 300 };
 export function speedFine(over) { return over < 20 ? 300 : over < 30 ? 500 : over < 40 ? 700 : 1000; }
 
+import { LEVELS, tripRange } from './level.js';
+
 let seed = 7;
 const rnd = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >> 17; seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; };
 
 export class Taxi {
     constructor(net, saved) {
         this.net = net;
+        this.level = LEVELS.normal;   // set by the shift (Settings > Difficulty)
         const s = saved || {};
         this.money = s.money ?? 300;
         this.fuel = s.fuel ?? 9;
@@ -67,7 +70,7 @@ export class Taxi {
             if (e !== this.lastE) { this.lastE = e; this.lastRem = 1e9; this.wrongT = 0; }
             const J = dir > 0 ? net.eB[e] : net.eA[e];
             const rem = dir > 0 ? net.eLen[e] - q.s : q.s;
-            const cop = this.enf ? this.enf.officer(v.px, v.pz) : null;   // an officer who sees the taxi (null = nobody)
+            const cop = this.enf ? this.enf.officer(v.px, v.pz, this.level.see) : null;   // an officer who sees the taxi (null = nobody)
             // red light: crossing the stop line on red, seen by an officer
             const Li = net.jLight[J];
             if (Li >= 0 && speed > 2) {
@@ -91,12 +94,12 @@ export class Taxi {
                     if (this.camE === e && was !== undefined && (was - c.s) * (now - c.s) <= 0 && was !== now && this.time > (c.cool || 0)) {
                         c.cool = this.time + 20;
                         this.flash = 0.25;
-                        if (kmh > lim + 5) this.fine('speed', speedFine(kmh - lim), 'camSpeed:' + Math.round(kmh) + ' km/h / ' + lim);
+                        if (kmh > lim + this.level.tol) this.fine('speed', speedFine(kmh - lim), 'camSpeed:' + Math.round(kmh) + ' km/h / ' + lim);
                     }
                 }
                 this.camE = e; this.camS = q.s;
             }
-            if (kmh > lim + 5 && cop) { this.overT += dt; this.overMax = Math.max(this.overMax, kmh - lim); } else { this.overT = Math.max(0, this.overT - dt * 2); if (this.overT === 0) this.overMax = 0; }
+            if (kmh > lim + this.level.tol && cop) { this.overT += dt; this.overMax = Math.max(this.overMax, kmh - lim); } else { this.overT = Math.max(0, this.overT - dt * 2); if (this.overT === 0) this.overMax = 0; }
             if (this.overT > 3 && this.time > this.cool.speed) {
                 this.fine('speed', speedFine(this.overMax), 'policeSpeed:' + Math.round(lim + this.overMax) + ' km/h / ' + lim);
                 this.cool.speed = this.time + 40; this.overT = 0; this.overMax = 0;
@@ -168,7 +171,7 @@ export class Taxi {
     }
 
     // ---- people ----
-    // a passenger waving on a pavement 40-320 m away (mostly ahead), each with somewhere to go 0.8-3.5 km away
+    // a passenger waving on a pavement 40-320 m away (mostly ahead), each with somewhere to go (level.js: short at first)
     spawnPed(v, q2) {
         const net = this.net, hd = Math.atan2(v.R[6], v.R[8]);
         for (let tries = 0; tries < 20; tries++) {
@@ -186,11 +189,12 @@ export class Taxi {
             return;
         }
     }
-    // somewhere 0.8-3.5 km from (x, z) on a street a taxi can stop in; km = the estimate by road (straight line x 1.3)
+    // somewhere a trip away from (x, z) on a street a taxi can stop in (short at first, longer with every ride paid: level.js);
+    // km = the estimate by road (straight line x 1.3)
     pickDest(x, z, q2) {
         const net = this.net;
         for (let tries = 0; tries < 12; tries++) {
-            const a = rnd() * Math.PI * 2, r = 800 + rnd() * 2700;
+            const T = tripRange(this.level, this.stats.rides), a = rnd() * Math.PI * 2, r = (T[0] + rnd() * (T[1] - T[0])) * 1000 / 1.3;
             net.query(x + Math.sin(a) * r, z + Math.cos(a) * r, -1, q2);
             const e = q2.edge;
             if (e < 0 || q2.junc >= 0 || net.eLen[e] < 30 || net.eCls[e] === 0) continue;
@@ -249,7 +253,7 @@ export class Taxi {
         const side = rnd() < 0.5 ? 1 : -1;
         const at = net.at(d.e, d.s, side * (net.eHw[d.e] + 1.7), {});
         p.state = 'walk'; p.t = 0;
-        this.ride = { ped: p, e: d.e, s: d.s, side, x: at.x, y: at.y, z: at.z, route, len: route.len, eta: route.len / 8.2 + 45, t: 0, km: 0, hits: 0, fines: 0, scare: 0,
+        this.ride = { ped: p, e: d.e, s: d.s, side, x: at.x, y: at.y, z: at.z, route, len: route.len, eta: route.len / this.level.time[0] + this.level.time[1], t: 0, km: 0, hits: 0, fines: 0, scare: 0,
             name: d.name, fare: Q.fare, routeT: 0 };
         this.toast('pickup', 'ok');
     }

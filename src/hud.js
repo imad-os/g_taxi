@@ -3,6 +3,7 @@
 // fines, accidents and paid rides. DOM, rewritten about 12 times a second (text only when it changes).
 import { I18n } from './i18n.js';
 import { FUEL_PRICE } from './taxi.js';
+import { Gauges, turnArrow } from './gauges.js';
 
 const MPP = 5;        // map: metres per pixel of the pre-drawn city
 const el = (cls, parent, tag) => { const e = document.createElement(tag || 'div'); e.className = cls; if (parent) parent.appendChild(e); return e; };
@@ -20,11 +21,9 @@ export class Hud {
         this.sign = el('h-sign', r); this.signV = el('n', this.sign); this.street = el('h-street', r);
         this.warn = el('h-warn', r);
         this.area = el('h-area', r); const mp = el('h-map', r); this.mapC = el('', mp, 'canvas'); this.mapC.width = this.mapC.height = 260; this.mapX = this.mapC.getContext('2d');
-        this.dash = el('h-dash', r);
-        this.spd = el('spd', this.dash); this.unit = el('unit', this.dash); this.unit.textContent = 'km/h';
-        this.gear = el('gear', this.dash); this.rpm = el('rpm', this.dash); this.rpmB = el('b', this.rpm);
-        this.fuelW = el('fuel', this.dash); this.fuelB = el('b', this.fuelW); this.fuelT = el('t', this.dash);
-        this.lim = el('lim', this.dash);
+        this.gauges = new Gauges(r); this.gs = {};
+        this.turn = el('h-turn', r); this.turnC = el('', this.turn, 'canvas'); this.turnC.width = this.turnC.height = 96; this.turnX = this.turnC.getContext('2d');
+        this.turnD = el('d', this.turn); this.turnN = el('n', this.turn);
         this.ride = el('h-ride', r);
         this.prompt = el('h-prompt', r);
         this.cards = el('h-cards', r);
@@ -80,17 +79,22 @@ export class Hud {
         if ((this.areaT = (this.areaT || 0) - step) <= 0) { this.areaT = 0.5; this.set(this.area, 'area', S.net.areaName(v.px, v.pz, I18n.lang)); }
         const w = T.wrongNow ? I18n.t('wrongWay') : T.speeding ? I18n.t('slowDown') : v.stalled ? I18n.t('stalled') : '';
         this.set(this.warn, 'warn', w); this.warn.className = 'h-warn' + (w ? ' on' : '');
-        // dash
-        this.set(this.spd, 'spd', String(kmh));
-        this.spd.className = 'spd' + (lim && kmh > lim + 5 ? ' over' : '');
+        // the instrument cluster
         const g = v.gearbox ? (v.mgear < 0 ? 'R' : v.mgear === 0 ? 'N' : String(v.mgear)) : (v.reverse ? 'R' : 'D' + v.gear);
-        this.set(this.gear, 'gear', g);
-        this.rpmB.style.transform = 'scaleX(' + Math.min(1, v.rpm / v.spec.rpm).toFixed(3) + ')';
-        this.rpmB.className = 'b' + (v.rpm > v.spec.rpm * 0.92 ? ' red' : '');
-        this.fuelB.style.transform = 'scaleX(' + Math.max(0, T.fuel / T.tank).toFixed(3) + ')';
-        this.fuelB.className = 'b' + (T.fuel < 4 ? ' low' : '');
-        this.set(this.fuelT, 'fuel', '⛽ ' + T.fuel.toFixed(1) + ' L');
-        this.set(this.lim, 'limiter', T.limiter ? '⊘ ' + T.limiter : '');
+        const G = this.gs;
+        G.kmh = kmh; G.rpm = v.rpm; G.maxRpm = v.spec.rpm; G.gear = g; G.fuel = T.fuel; G.tank = T.tank; G.low = T.fuel < 4;
+        G.hand = v.input.handbrake > 0 || v.hold; G.engine = !!(v.stalled || v.fuelCut); G.limiter = T.limiter; G.clutchBox = v.gearbox === 'clutch';
+        G.clutch = (v.input.clutch || 0) > 0.5; G.ride = !!(T.ride && T.ride.ped.state === 'in'); G.over = !!(lim && kmh > lim + 5);
+        this.gauges.draw(G);
+        // the next turn (Settings > Route arrows)
+        const tn = S.arrows && S.guide ? S.guide.turn : null;
+        if (tn) {
+            const k = tn.dir + (tn.dist < 30 ? 'n' : '');
+            if (this.cache.turnK !== k) { this.cache.turnK = k; turnArrow(this.turnX, tn.dir); }
+            this.set(this.turnD, 'turnD', I18n.t(tn.dir === 'arrive' ? 'arrive' : tn.dir === 'uturn' ? 'turnU' : tn.dir === 'left' ? 'turnL' : 'turnR') + ' · ' + I18n.t('inM', Math.max(0, Math.round(tn.dist / 10) * 10)));
+            this.set(this.turnN, 'turnN', tn.edge >= 0 ? S.net.edgeName(tn.edge, I18n.lang) : (T.ride && T.ride.name) || '');
+            this.turn.className = 'h-turn on' + (tn.dist < 40 ? ' near' : '');
+        } else if (this.turn.className !== 'h-turn') this.turn.className = 'h-turn';
         // ride
         const R = T.ride;
         if (R && R.ped.state === 'in') {

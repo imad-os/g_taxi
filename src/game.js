@@ -14,6 +14,8 @@ import { People } from './people.js';
 import { Walkers } from './walkers.js';
 import { Enforce } from './enforce.js';
 import { BugLog } from './buglog.js';
+import { RouteGuide } from './guide.js';
+import { levelOf } from './level.js';
 
 // the petit taxi: a 1.5 l diesel city saloon (real numbers: 66 kW, 200 Nm, 5 gears), Tangier's turquoise
 SPECS.taxi = { model: 'tr_taxi', cls: 'T', mass: 1180, power: 66, torque: 200, rpm: 4600, gears: [3.73, 2.05, 1.32, 0.97, 0.76], final: 4.21,
@@ -53,9 +55,10 @@ export class Shift {
         this.q = {}; this.qp = {};
         this.taxi = new Taxi(net, opts.saved);
         this.taxi.lang = opts.lang;
+        this.level = levelOf(opts.level); this.taxi.level = this.level;
         this.enforce = new Enforce(net); this.taxi.enf = this.enforce; this.city.addEnforce(this.enforce);
         this.start(opts.start);
-        this.traffic = new Traffic(this.scene, net, quality.tier === 'low' ? 9 : 13);
+        this.traffic = new Traffic(this.scene, net, Math.max(3, Math.round((quality.tier === 'low' ? 9 : 13) * this.level.traffic)));
         this.all = [this.me].concat(this.traffic.cars);
         this.walkers = new Walkers(net, quality.tier === 'low' ? 8 : 16);
         this.people = new People(this.scene, 10 + this.walkers.list.length);
@@ -81,6 +84,8 @@ export class Shift {
         this.size = new THREE.Vector2();
         this.shiftMsg = '';
         this.bug = new BugLog();
+        this.guide = new RouteGuide(this.scene, net);
+        this.arrows = opts.arrows !== false;
     }
 
     // put the taxi on a street near the saved place (or the city centre), facing along it
@@ -155,8 +160,9 @@ export class Shift {
             this.routeT = 4;
             const R = taxi.ride, heading = (v.R[6] * this.qp.fx + v.R[8] * this.qp.fz) >= 0 ? 1 : -1;
             const r = net.route(this.qp.edge, this.qp.s, heading, R.e, R.s);
-            if (r) { R.route = r; R.left = r.len; }
+            if (r) { R.route = r; R.left = r.len; this.guide.t = 0; }
         }
+        this.guide.update(dt, taxi.ride, this.qp, this.arrows, (v.R[6] * this.qp.fx + v.R[8] * this.qp.fz) >= 0 ? 1 : -1);
         if ((this.lightT -= dt) <= 0) { this.lightT = 0.25; this.city.setLamps((L, ph) => lightState(net, L, ph, this.traffic.t)); }
         U.uTime.value += dt;
         // tyres: skid marks and smoke for the taxi
@@ -253,7 +259,7 @@ export class Shift {
         else if (this.goodFrames > 240 && this.scale < max) { this.scale = Math.min(max, this.scale + 0.05); this.goodFrames = 0; this.onScale && this.onScale(this.scale); }
     }
     dispose() {
-        this.city.dispose(); this.traffic.dispose(); this.me.view.dispose(); this.people.dispose();
+        this.city.dispose(); this.traffic.dispose(); this.guide.dispose(); this.me.view.dispose(); this.people.dispose();
         this.scene.remove(this.beacon); this.beacon.geometry.dispose(); this.beacon.material.dispose();
         const f = this.fx;
         for (const o of [f.sparks.points, f.smoke.points, f.skids.mesh, f.streaks.lines]) { o.geometry.dispose(); o.material.dispose(); }

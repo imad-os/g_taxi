@@ -50,7 +50,7 @@ await P.screenshot({ path: out + '/5-pedestrian.png' });
 await P.evaluate(() => window.TT.pauseShift());
 await P.waitForTimeout(500);
 await P.screenshot({ path: out + '/6-pause.png' });
-await P.evaluate(() => { const U = window.TT.ui; U.f = 5; U.input('confirm'); });
+await P.evaluate(() => { const U = window.TT.ui; U.f = 4; U.input('confirm'); });
 await P.waitForTimeout(400);
 await P.screenshot({ path: out + '/7-start-over.png' });
 await P.evaluate(() => { const U = window.TT.ui; U.f = 1; U.input('confirm'); });
