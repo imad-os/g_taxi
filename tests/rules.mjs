@@ -31,7 +31,7 @@ const lastEvents = P => P.evaluate(() => window.TT.shift.taxi.log.slice(-4).map(
 
 // ---------- 1. a whole ride + crash + speeding (automatic) ----------
 {
-    const { s, P, pad, tap, put } = await session('?dev&fresh&proof');
+    const { s, P, pad, tap, put } = await session('?dev&fresh&proof&level=real');
     // pick-up: a waiting passenger next to the taxi
     await P.evaluate(() => {
         const S = window.TT.shift, v = S.me.veh, T = S.taxi;
@@ -96,7 +96,7 @@ const lastEvents = P => P.evaluate(() => window.TT.shift.taxi.log.slice(-4).map(
 
 // ---------- 2. fuel: station refill, then running dry + roadside help ----------
 {
-    const { s, P, pad, tap, put } = await session('?dev&fresh&proof');
+    const { s, P, pad, tap, put } = await session('?dev&fresh&proof&level=real');
     const st = await P.evaluate(() => window.TT.shift.net.stations[0]);
     await put(st.e, st.k, st.side || 1);
     await P.waitForTimeout(1500);

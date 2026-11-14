@@ -44,7 +44,10 @@ export class Taxi {
     save() { return { money: Math.round(this.money), fuel: +this.fuel.toFixed(2), stats: this.stats }; }
     pay(dh, why) { this.money += dh; this.dirty = true; if (why) this.stats[why] += Math.abs(dh); }
     toast(text, kind) { this.toasts.push({ text, kind: kind || 'info', t: 0 }); }
+    // a fine or a cost at this level's share (level.js `pay`: Real life = the full amount), rounded to 10 DH
+    cost(dh) { return Math.max(10, Math.round(dh * (this.level.pay ?? 1) / 10) * 10); }
     fine(kind, amount, detail) {
+        amount = this.cost(amount);
         this.pay(-amount, 'fines');
         if (this.ride) this.ride.fines++;
         this.events.push({ kind: 'fine', title: 'fine_' + kind, lines: [[detail || '', -amount]], total: -amount });
@@ -265,8 +268,8 @@ export class Taxi {
         const lines = [['fareKm:' + (r.len / 1000).toFixed(1), Math.round(fare)]];
         let total = fare;
         const late = r.t - r.eta;
-        if (late > 0) { const k = Math.min(0.6, Math.ceil(late / 15) * 0.1); lines.push(['lateBy:' + Math.round(late), -Math.round(fare * k)]); total -= fare * k; }
-        if (r.hits > 0) { const k = Math.min(1, r.hits * 0.25); lines.push(['bumps:' + r.hits, -Math.round(fare * k)]); total -= fare * k; }
+        if (late > 0) { const k = Math.min(0.6, Math.ceil(late / 15) * 0.1) * (this.level.pay ?? 1); lines.push(['lateBy:' + Math.round(late), -Math.round(fare * k)]); total -= fare * k; }
+        if (r.hits > 0) { const k = Math.min(1, r.hits * 0.25) * (this.level.pay ?? 1); lines.push(['bumps:' + r.hits, -Math.round(fare * k)]); total -= fare * k; }
         if (late <= 0 && r.hits === 0 && r.fines === 0) { const tip = Math.max(2, Math.round(fare * (0.1 + rnd() * 0.1))); lines.push(['tip', tip]); total += tip; }
         total = Math.max(0, Math.round(total));
         this.pay(total, 'earned');
@@ -279,10 +282,10 @@ export class Taxi {
 
     // the taxi ran into a person on foot: always the driver's fault, always paid
     hitPed(kmh) {
-        const hurt = Math.round((800 + kmh * 60) / 10) * 10;
-        const lines = [['impact:' + Math.round(kmh), 0], ['pedHurt', -hurt], ['fineFault', -FINES.fault]];
-        const total = -hurt - FINES.fault;
-        this.money += total; this.stats.repairs += hurt; this.stats.fines += FINES.fault; this.dirty = true;
+        const hurt = this.cost(800 + kmh * 60), ff = this.cost(FINES.fault);
+        const lines = [['impact:' + Math.round(kmh), 0], ['pedHurt', -hurt], ['fineFault', -ff]];
+        const total = -hurt - ff;
+        this.money += total; this.stats.repairs += hurt; this.stats.fines += ff; this.dirty = true;
         if (this.ride) this.ride.hits++;
         this.events.push({ kind: 'crash', title: 'fine_ped', lines, total });
     }
@@ -304,19 +307,19 @@ export class Taxi {
         const kmh = Math.round(c.rel * 3.6);
         const fault = c.wall || c.fault || this.time - this.redT < 4;
         const lines = [['impact:' + kmh, 0]];
-        const own = Math.min(14000, Math.round(c.rel * c.rel * 18 / 10) * 10);
+        const own = this.cost(Math.min(14000, c.rel * c.rel * 18)), ff = this.cost(FINES.fault);
         let total = 0;
         if (fault) { lines.push(['repairOwn', -own]); total -= own; }
         else lines.push(['repairInsured', 0]);
         if (c.car && fault) {
             const third = Math.min(14000, Math.round(own * 0.9 / 10) * 10);
             lines.push(['repairOther', -third]); total -= third;
-            lines.push(['fineFault', -FINES.fault]); total -= FINES.fault; this.stats.fines += FINES.fault;
+            lines.push(['fineFault', -ff]); total -= ff; this.stats.fines += ff;
         }
-        this.money += total; this.stats.repairs += -total - (c.car && fault ? FINES.fault : 0); this.dirty = true;
+        this.money += total; this.stats.repairs += -total - (c.car && fault ? ff : 0); this.dirty = true;
         if (this.ride && this.ride.ped.state === 'in') {
             this.ride.hits++;
-            if (fault && c.rel > 6) { const comp = Math.round((200 + c.rel * 40) / 10) * 10; lines.push(['passengerHurt', -comp]); total -= comp; this.money -= comp; this.stats.repairs += comp; }
+            if (fault && c.rel > 6) { const comp = this.cost(200 + c.rel * 40); lines.push(['passengerHurt', -comp]); total -= comp; this.money -= comp; this.stats.repairs += comp; }
             if (c.rel > 8.5) {   // a real crash: the passenger gets out and does not pay
                 const p = this.ride.ped; p.state = 'gone'; this.ride = null;
                 lines.push(['passengerLeft', 0]);

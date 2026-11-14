@@ -45,9 +45,13 @@ function frame(ts) {
     const ms = ts - App.last; App.last = ts;
     App.acc += Math.min(100, ms);
     let n = 0;
+    if (App.botSteps && App.state === 'drive') { for (; n < App.botSteps; n++) update(STEP); App.acc = 0; }   // road bot: a fixed slice of game time per frame
     while (App.acc >= STEP * 1000 - 0.5 && n < 4) { update(STEP); App.acc -= STEP * 1000; n++; }
     if (App.acc > STEP * 2000) App.acc = 0;
-    if (App.shift && App.state !== 'boot') { App.shift.render(ms); if (App.capture) sendBug(App.capture); }
+    if (App.shift && App.state !== 'boot') {
+        App.shift.render(ms); if (App.capture) sendBug(App.capture);
+        const B = App.shift.bot; if (B && B.shots.length) { const img = App.shift.bug.shot(App.canvas); for (const id of B.shots) B.pics[id] = img; B.shots.length = 0; }
+    }
     if (App.fpsLog.length < 20000) { App.fpsLog.push(ms); App.workLog.push(performance.now() - t0); }
 }
 function startLoop() { if (!App.raf) { App.last = 0; App.acc = 0; App.raf = requestAnimationFrame(frame); } }
@@ -102,7 +106,7 @@ App.applyGear = () => { if (!App.shift) return; const v = App.shift.me.veh, g = 
 App.startShift = function (keep) {
     App.ui.hide();
     if (App.shift) { if (!keep) save(); App.shift.dispose(); App.shift = null; }
-    const shift = new Shift(App.renderer, App.net, App.quality, { gearbox: App.settings.gearbox, car: App.settings.car, level: App.settings.level, arrows: App.settings.arrows, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
+    const shift = new Shift(App.renderer, App.net, App.quality, { bot: App.botOpts, gearbox: App.settings.gearbox, car: App.settings.car, level: App.settings.level, arrows: App.settings.arrows, saved: App.saved, start: App.saved && App.saved.at, lang: I18n.lang });
     shift.onScale = () => resize();
     shift.onSound = (k, r, x) => App.sound.event(k, r, x, shift);
     App.shift = shift;
@@ -145,6 +149,8 @@ MyPC.init({
             App.net = await Net.load(p => MyPC.progress(0.6 + p * 0.35));
             App.saved = MyPC.load('taxi', null);
             App.settings = Object.assign({ gearbox: 'auto', car: 'taxi', level: 'normal', arrows: true, hud: 'normal' }, MyPC.load('settings', null));
+            // 0.4.1: four levels; 0.4.0's Hard (the full game) is now Real life
+            if (App.settings.lv !== 2) { if (App.settings.level === 'hard') App.settings.level = 'real'; App.settings.lv = 2; }
             App.hud = new Hud(document.getElementById('hud'));
             App.applyHud();
             App.sound = new Sound(info.volume || { music: 0.7, sfx: 0.8 });
@@ -170,6 +176,10 @@ MyPC.init({
             if (P.get('level')) App.settings.level = P.get('level');
             if (P.get('hud')) { App.settings.hud = P.get('hud'); App.applyHud(); }
             if (P.has('fresh')) App.saved = null;
+            if (P.has('bot')) {   // the road bot (tools/roadbot.mjs, docs/ROADBOT.md): &seed= &spread= (jump every n trips) &kmh= &steps= (60 Hz ticks per frame)
+                App.botOpts = { seed: +P.get('seed') || 1, spread: +P.get('spread') || 0, kmh: +P.get('kmh') || 50 };
+                App.botSteps = +P.get('steps') || 6; App.settings.arrows = false;
+            }
             if (P.has('x')) App.saved = Object.assign({}, App.saved, { at: { x: +P.get('x'), z: +P.get('z') } });
             App.startShift();
         } else { App.state = 'menu'; App.ui.title(); }

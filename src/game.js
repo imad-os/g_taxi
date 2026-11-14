@@ -15,6 +15,7 @@ import { Walkers } from './walkers.js';
 import { Enforce } from './enforce.js';
 import { BugLog } from './buglog.js';
 import { RouteGuide } from './guide.js';
+import { RoadBot } from './roadbot.js';
 import { levelOf } from './level.js';
 
 // the petit taxi: a 1.5 l diesel city saloon (real numbers: 66 kW, 200 Nm, 5 gears), Tangier's turquoise
@@ -58,7 +59,8 @@ export class Shift {
         this.level = levelOf(opts.level); this.taxi.level = this.level;
         this.enforce = new Enforce(net); this.taxi.enf = this.enforce; this.city.addEnforce(this.enforce);
         this.start(opts.start);
-        this.traffic = new Traffic(this.scene, net, Math.max(3, Math.round((quality.tier === 'low' ? 9 : 13) * this.level.traffic)));
+        this.traffic = new Traffic(this.scene, net, opts.bot ? 0 : Math.max(3, Math.round((quality.tier === 'low' ? 9 : 13) * this.level.traffic)));
+        this.bot = opts.bot ? new RoadBot(this, opts.bot) : null;   // dev: the road bot drives (tools/roadbot.mjs)
         this.all = [this.me].concat(this.traffic.cars);
         this.walkers = new Walkers(net, quality.tier === 'low' ? 8 : 16);
         this.people = new People(this.scene, 10 + this.walkers.list.length);
@@ -121,6 +123,7 @@ export class Shift {
         this.time += dt;
         const me = this.me, v = me.veh, c = input.ctl, taxi = this.taxi;
         v.input.steer = c.steer; v.input.throttle = c.throttle; v.input.brake = c.brake; v.input.handbrake = c.handbrake; v.input.clutch = c.clutch;
+        if (this.bot) this.bot.drive(dt);
         const E = input.edge;
         if (E.camera) this.cam.mode = (this.cam.mode + 1) % 3;
         if (v.gearbox && (E.gearUp || E.gearDown)) { const why = v.shift(E.gearUp ? 1 : -1); if (why === 'clutch') taxi.toast('needClutch', 'warn'); }

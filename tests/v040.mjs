@@ -25,29 +25,32 @@ const check = (ok, what, data) => { console.log((ok ? 'ok   ' : 'FAIL ') + what,
     const lv = await P.evaluate(() => window.TT.settings.level);
     check(lv === 'hard', 'OK on Difficulty changes it (Normal -> Hard)', lv);
     await P.screenshot({ path: out + '/2-settings.png' });
-    await P.evaluate(() => { const U = window.TT.ui; U.input('confirm', 'keys'); U.input('confirm', 'keys'); U.input('cancel', 'keys'); });   // back to Normal, Back
+    await P.evaluate(() => { const U = window.TT.ui; U.input('confirm', 'keys'); U.input('confirm', 'keys'); U.input('confirm', 'keys'); U.input('cancel', 'keys'); });   // Real life, Easy, Normal, Back
     check(await P.evaluate(() => window.TT.settings.level === 'normal' && window.TT.ui.screen === 'title'), 'Back returns to the title');
     await s.close();
 }
 
 // ---- difficulty: trips, police, cameras, traffic
-for (const level of ['easy', 'normal', 'hard']) {
+for (const level of ['easy', 'normal', 'hard', 'real']) {
     const s = await open('?dev&fresh&level=' + level, { w: 640, h: 360 });
     const P = s.page;
     await P.waitForFunction(() => window.TT && window.TT.shift && window.TT.state === 'drive', null, { timeout: 90000 });
     const r = await P.evaluate(() => {
         const S = window.TT.shift, T = S.taxi, q = {};
         const km = (rides) => { T.stats.rides = rides; const l = []; for (let k = 0; k < 40; k++) { const d = T.pickDest(S.me.veh.px, S.me.veh.pz, q); if (d) l.push(d.km); } return [Math.min(...l), Math.max(...l)].map(v => +v.toFixed(2)); };
-        return { first: km(0), after20: km(20), see: S.level.see, tol: S.level.tol, cars: S.traffic.cars.length };
+        // fines and costs: a share of the full amount (Real life = all of it)
+        const m0 = T.money; T.fine('red', 700, ''); const red = m0 - T.money; T.money = m0;
+        return { first: km(0), after20: km(20), see: S.level.see, tol: S.level.tol, cars: S.traffic.cars.length, red };
     });
     console.log(level, JSON.stringify(r));
-    if (level === 'easy') check(r.first[1] <= 1.05 && r.after20[1] > 1.5 && r.see === 45 && r.tol === 15, 'Easy: first trips up to 1 km, longer after 20 rides; police see 45 m, cameras +15', r);
-    if (level === 'normal') check(r.first[1] <= 1.35 && r.after20[1] > 2.5 && r.see === 70, 'Normal: first trips up to 1.3 km, longer after 20 rides; police see 70 m', r);
-    if (level === 'hard') check(r.after20[1] > 3.5 && r.see === 90 && r.tol === 5, 'Hard: as 0.3.0 (police 90 m, cameras +5), longest trips', r);
+    if (level === 'easy') check(r.first[1] <= 0.85 && r.after20[1] > 1.2 && r.see === 30 && r.tol === 20 && r.red === 180, 'Easy: first trips up to 0.8 km; police see 30 m, cameras +20; a 700 DH fine costs 180', r);
+    if (level === 'normal') check(r.first[1] <= 1.05 && r.after20[1] > 1.5 && r.see === 45 && r.tol === 15 && r.red === 280, 'Normal (= 0.4.0 Easy): first trips up to 1 km; police see 45 m, cameras +15; fines at 40 %', r);
+    if (level === 'hard') check(r.first[1] <= 1.35 && r.after20[1] > 2.5 && r.see === 70 && r.red === 420, 'Hard (= 0.4.0 Normal): police see 70 m; fines at 60 %', r);
+    if (level === 'real') check(r.after20[1] > 3.5 && r.see === 90 && r.tol === 5 && r.red === 700, 'Real life (= 0.3.0): police 90 m, cameras +5, full fines, longest trips', r);
     globalThis['cars_' + level] = r.cars;
     await s.close();
 }
-check(globalThis.cars_easy < globalThis.cars_normal && globalThis.cars_normal < globalThis.cars_hard, 'fewer cars on easier levels', [globalThis.cars_easy, globalThis.cars_normal, globalThis.cars_hard]);
+check(globalThis.cars_easy <= globalThis.cars_normal && globalThis.cars_normal < globalThis.cars_hard && globalThis.cars_hard < globalThis.cars_real, 'fewer cars on easier levels', [globalThis.cars_easy, globalThis.cars_normal, globalThis.cars_hard, globalThis.cars_real]);
 
 // ---- a ride: arrows on the road, the turn sign, the gauges; HUD sizes
 {

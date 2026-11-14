@@ -2,3 +2,5 @@ raw/
 node_modules/
 proof*/
 bugs/
+roadbot-out/
+bot-out*/

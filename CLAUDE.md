@@ -80,6 +80,14 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - Road surface: where two streets' asphalt overlaps (or is within `MERGE` = 2.5 m), `net.query` blends their heights by depth,
   and `city.js` draws every asphalt vertex (5 columns across) at `net.query`'s height; a pavement / verge reaching onto
   another street's asphalt goes 4 cm under it. Junctions with 3+ streets: one fitted plane (`fitJunctions`, `BLEND` 12 m).
+- **0.4.1 (owner requests 2026-11-14)**: four levels in `src/level.js`: **Easy** (new, the gentlest), **Normal** (default) = 0.4.0's
+  Easy, **Hard** = 0.4.0's Normal, **Real life** = 0.4.0's Hard = the game as in 0.3.0. `pay` = the share of every fine, repair, injury
+  cost and late / bump pay cut (`Taxi.cost`): 25 / 40 / 60 / 100 %. A saved 0.4.0 `hard` becomes `real` (settings `lv: 2`).
+  `tests/rules.mjs` runs on Real life.
+- **Road bot (owner request 2026-11-14)**: `src/roadbot.js` (dev only, `?dev&bot`) drives by itself and logs road problems (cut routes,
+  holes, grass on the asphalt, height mismatches, off-road turns, stuck spots, kinks, bumps) with a picture each.
+  **`node tools/roadbot.mjs <out> --minutes 20`** writes report.md / report.json / shots / map.png. How to run it and the fixing loop:
+  **docs/ROADBOT.md**. Out folders are not committed.
 
 ## Stage 2 (planned)
 Garage with upgrades that change the part's look (TV-safe layout), real fuel station places from OSM, turn-by-turn hints,
