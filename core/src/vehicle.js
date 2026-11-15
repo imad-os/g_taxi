@@ -206,7 +206,7 @@ export class Vehicle {
         const lock = sp.steer / (1 + v * (sp.steerFade ?? 0.035));
         if (drift) return lock;
         const wb = Math.max(1.5, this.wheels[0].mz - this.wheels[2].mz);
-        return Math.min(lock, Math.atan(wb * sp.mu * G / Math.max(1, v * v)) + (sp.steerSlack ?? 0.13) + slip);
+        return Math.min(lock, Math.atan(wb * sp.mu * G / Math.max(1, v * v)) + (sp.steerSlack ?? 0.13) + slip * (sp.steerCatch ?? 1));
     }
     step(dt, track, q) {
         const sp = this.spec, R = this.R, inp = this.input;

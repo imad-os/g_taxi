@@ -94,7 +94,10 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   Test: `node tests/v045.mjs <folder>`.
 - **Steering (owner request 2026-11-14, 0.4.2: tight turns)**: the taxi cars set `steer` 0.7, `steerFade` 0.02, `steerSlack` 0.22,
   `steerRate` 3.6 (additive spec fields read by `core/src/vehicle.js` `lockAt` / the wheel rate; Asphalt keeps 0.035 / 0.13 / 2.6).
-  Lock at 20 / 40 km/h: 36° / 26° (was 30° / 21°). Stick curve ^1.2 (was 1.5), D-pad ramps in ~0.1 s. `node tests/steer.mjs [car] [dir]`.
+  Stick curve ^1.2 (was 1.5), D-pad ramps in ~0.1 s. `node tests/steer.mjs [car] [dir]`. **0.4.6** (owner 2026-11-15: "drifts like racing
+  cars", "smoke exaggerated"): `steerSlack` 0.03 + `steerCatch` 0 (new additive field: the body's slip no longer adds lock), so at speed
+  only what the front tyres hold: lock 36° / 24° / 15° at 20 / 30 / 40 km/h; smoke + skids (`Shift.smokeAt` 0.45, fewer puffs) only for
+  rear slides, wheelspin, locked brakes, never front understeer. `node tests/corner.mjs` (30 / 45 / 60 km/h full lock: no drift, no smoke).
 - **Road bot (owner request 2026-11-14)**: `src/roadbot.js` (dev only, `?dev&bot`) drives by itself and logs road problems (cut routes,
   holes, grass on the asphalt, height mismatches, off-road turns, stuck spots, kinks, bumps) with a picture each.
   **`node tools/roadbot.mjs <out> --minutes 20`** writes report.md / report.json / shots / map.png. How to run it and the fixing loop:

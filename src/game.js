@@ -27,8 +27,10 @@ export const CARS = ['taxi', 'city', 'hatch'];
 SPECS.taxi_city = Object.assign({}, SPECS.city, { cls: 'T', nitro: 0 });
 SPECS.taxi_hatch = Object.assign({}, SPECS.hatch, { cls: 'T', nitro: 0 });
 // city steering (owner request 2026-11-14: "make it better to turn the tight turns"): more lock (40°), less taken away with
-// speed, a little more than the strict grip limit, and a quicker wheel (core/src/vehicle.js lockAt: steerFade / steerSlack / steerRate)
-for (const k of ['taxi', 'taxi_city', 'taxi_hatch']) Object.assign(SPECS[k], { steer: 0.7, steerFade: 0.02, steerSlack: 0.22, steerRate: 3.6 });
+// speed, a quicker wheel; 2026-11-15 ("drifts like racing cars"): at speed only what the front tyres can hold (steerSlack 0.03,
+// steerCatch 0: the body's slip in a tight turn no longer adds lock) and smoke only for a real slide (smokeAt)
+// (core/src/vehicle.js lockAt: steerFade / steerSlack / steerCatch / steerRate)
+for (const k of ['taxi', 'taxi_city', 'taxi_hatch']) Object.assign(SPECS[k], { steer: 0.7, steerFade: 0.02, steerSlack: 0.03, steerCatch: 0, steerRate: 3.6 });
 const specOf = car => car === 'city' ? SPECS.taxi_city : car === 'hatch' ? SPECS.taxi_hatch : SPECS.taxi;
 
 export function setDay() {
@@ -83,6 +85,7 @@ export class Shift {
         // the race game's sound module expects a race: players + other racers (for their engine voices)
         this.race = { players: [this.me], racers: this.all };
         this.lightT = 0; this.routeT = 0; this.time = 0;
+        this.smokeAt = 0.45;   // tyre slide where skid marks and smoke start (was 0.35: "the smoke is exaggerated")
         this.city.stream(v.px, v.pz, 0, true);
         this.city.setLamps((L, ph) => lightState(net, L, ph, this.traffic.t));
         this.frameMs = 16.7; this.scale = quality.scale || 1; this.lateFrames = 0; this.goodFrames = 0;
@@ -174,8 +177,9 @@ export class Shift {
         // tyres: skid marks and smoke for the taxi
         const fx = this.fx;
         for (let w = 0; w < 4; w++) {
-            const wh = v.wheels[w], slide = Math.max(wh.slipLat, wh.slipLong);
-            if (wh.contact && slide > 0.35 && v.speed > 4) { fx.skids.add(w, wh.cx, wh.cy, wh.cz, v.R[0], v.R[2], slide); if (Math.random() < slide * 0.4) fx.puff(wh.cx, wh.cy, wh.cz, v.vx, v.vz, slide); }
+            // a daily car: a front tyre pushing wide (understeer) squeals but does not smoke; rear slides / wheelspin / locked brakes do
+            const wh = v.wheels[w], slide = Math.max(wh.front ? wh.slipLat - 0.4 : wh.slipLat, wh.slipLong);
+            if (wh.contact && slide > this.smokeAt && v.speed > 4) { fx.skids.add(w, wh.cx, wh.cy, wh.cz, v.R[0], v.R[2], slide); if (Math.random() < slide * 0.25) fx.puff(wh.cx, wh.cy, wh.cz, v.vx, v.vz, slide); }
             else fx.skids.add(w, 0, 0, 0, 0, 0, 0);
         }
         fx.update(dt);
