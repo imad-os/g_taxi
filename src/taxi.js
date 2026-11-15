@@ -6,7 +6,7 @@
 export const FUEL_PRICE = 13.4;      // DH per litre (diesel at the pump, 2026)
 const TANK = 40;                     // litres
 const BURN = 4;                      // game time runs faster than a real shift: fuel burns 4x (a tank lasts ~3 h of play)
-export const FARE = { flag: 7, km: 4 };   // DH: pick-up + per km on the meter
+export const FARE = { flag: 14, km: 8 };   // DH: pick-up + per km on the meter (owner 2026-11-15: twice 0.4's 7 + 4)
 // fines (DH), code de la route (loi 52-05): classes 700 / 500 / 300; speeding by how far over the limit
 export const FINES = { red: 700, wrong: 700, pave: 500, fault: 300 };
 export function speedFine(over) { return over < 20 ? 300 : over < 30 ? 500 : over < 40 ? 700 : 1000; }
@@ -48,7 +48,12 @@ export class Taxi {
     cost(dh) { return Math.max(10, Math.round(dh * (this.level.pay ?? 1) / 10) * 10); }
     // fines only: level.js `fine` (owner 2026-11-14: a quarter of 0.4.1's on Easy / Normal / Hard; Real life = full)
     fineCost(dh) { return Math.max(10, Math.round(dh * (this.level.fine ?? 1) / 10) * 10); }
+    // level.js `gap`: at most one fine per gap seconds (owner 2026-11-15: "rarely fines me on easy"); one caught
+    // sooner gets a police warning instead (nothing to pay)
     fine(kind, amount, detail) {
+        const gap = this.level.gap || 0;
+        if (gap && this.time < (this.nextFine ?? gap * 0.5)) { this.toast('policeWarn', 'warn'); return; }
+        this.nextFine = this.time + gap;
         amount = this.fineCost(amount);
         this.pay(-amount, 'fines');
         if (this.ride) this.ride.fines++;
@@ -306,6 +311,7 @@ export class Taxi {
         c.t += dt;
         if (c.t < 1.2) return;
         this.crash = null;
+        if (c.rel < (this.level.freeHit || 0)) return;   // a light knock: nothing to pay on the easier levels (level.js `freeHit`)
         const kmh = Math.round(c.rel * 3.6);
         const fault = c.wall || c.fault || this.time - this.redT < 4;
         const lines = [['impact:' + kmh, 0]];
