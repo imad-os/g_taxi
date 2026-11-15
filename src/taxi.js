@@ -135,9 +135,9 @@ export class Taxi {
         if (this.helpT > 0) {
             this.helpT -= dt;
             if (this.helpT <= 0) {
-                const L = 6, cost = 150 + Math.round(L * FUEL_PRICE * 1.5);
+                const L = 6, svc = this.cost(150), cost = svc + Math.round(L * FUEL_PRICE * 1.5);
                 this.fuel += L; this.pay(-cost, 'fuel'); v.fuelCut = false; v.stalled = false;
-                this.events.push({ kind: 'help', title: 'helpDone', lines: [['helpService', -150], ['helpFuel', -(cost - 150)]], total: -cost });
+                this.events.push({ kind: 'help', title: 'helpDone', lines: [['helpService', -svc], ['helpFuel', -(cost - svc)]], total: -cost });
             }
             return;
         }
