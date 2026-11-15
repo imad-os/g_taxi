@@ -24,7 +24,7 @@ export class Taxi {
         this.money = s.money ?? 300;
         this.fuel = s.fuel ?? 9;
         this.tank = TANK;
-        this.stats = Object.assign({ rides: 0, earned: 0, fines: 0, repairs: 0, fuel: 0, km: 0, best: 0 }, s.stats);
+        this.stats = Object.assign({ rides: 0, earned: 0, fines: 0, repairs: 0, fuel: 0, km: 0, best: 0, nFines: 0, crashes: 0, stars: 0, rated: 0, last: [] }, s.stats);
         this.peds = [];              // waiting / walking people: { x, y, z, yaw, e, s, side, state: 'wait'|'walk'|'in'|'out', t, wave }
         this.ride = null;            // { ped, e, s, side, x, z, route, len, eta, t, km, hits, fines, fare }
         this.log = [];               // the last cards shown (pause screen, tests)
@@ -55,6 +55,7 @@ export class Taxi {
         if (gap && this.time < (this.nextFine ?? gap * 0.5)) { this.toast('policeWarn', 'warn'); return; }
         this.nextFine = this.time + gap;
         amount = this.fineCost(amount);
+        this.stats.nFines++;
         this.pay(-amount, 'fines');
         if (this.ride) this.ride.fines++;
         this.events.push({ kind: 'fine', title: 'fine_' + kind, lines: [[detail || '', -amount]], total: -amount });
@@ -116,7 +117,7 @@ export class Taxi {
             }
             // on the pavement, seen by an officer
             if (q.off >= 1 && Math.abs(q.d) > q.hl + 1.2 && speed > 3 && cop) this.paveT += dt; else this.paveT = Math.max(0, this.paveT - dt);
-            if (this.paveT > 1.2 && this.time > this.cool.pave) { this.fine('pave', FINES.pave, 'seenPolice'); this.cool.pave = this.time + 30; this.paveT = 0; }
+            if (this.paveT > 1.2 && this.time > this.cool.pave && this.level.pave !== false) { this.fine('pave', FINES.pave, 'seenPolice'); this.cool.pave = this.time + 30; this.paveT = 0; }
         } else this.wrongNow = 0;
         this.speeding = this.overT > 0;
         this.peopleTick(dt, v, q);
@@ -279,8 +280,13 @@ export class Taxi {
         if (r.hits > 0) { const k = Math.min(1, r.hits * 0.25) * (this.level.pay ?? 1); lines.push(['bumps:' + r.hits, -Math.round(fare * k)]); total -= fare * k; }
         if (late <= 0 && r.hits === 0 && r.fines === 0) { const tip = Math.max(2, Math.round(fare * (0.1 + rnd() * 0.1))); lines.push(['tip', tip]); total += tip; }
         total = Math.max(0, Math.round(total));
+        // the passenger's rating, 1-5 stars: late, bumps and fines on the way each cost stars
+        const stars = rateRide(late, r.hits, r.fines);
+        lines.push(['stars:' + '★'.repeat(stars) + '☆'.repeat(5 - stars), 0]);
         this.pay(total, 'earned');
-        this.stats.rides++; this.stats.best = Math.max(this.stats.best, total);
+        const S = this.stats;
+        S.rides++; S.best = Math.max(S.best, total); S.stars += stars; S.rated++;
+        S.last.unshift([String(r.name || '').slice(0, 40), Math.round(r.len / 100) / 10, total, stars]); if (S.last.length > 20) S.last.length = 20;
         this.events.push({ kind: 'ride', title: 'rideDone', lines, total });
         const p = r.ped; p.state = 'out'; p.t = 0; p.x = v.px + v.R[0] * 2.2 * r.side; p.z = v.pz + v.R[2] * 2.2 * r.side; p.y = r.y + 0.15; p.yaw = Math.atan2(v.R[6], v.R[8]);
         if (!this.peds.includes(p)) this.peds.push(p);
@@ -289,6 +295,7 @@ export class Taxi {
 
     // the taxi ran into a person on foot: always the driver's fault, always paid
     hitPed(kmh) {
+        this.stats.crashes++;
         const hurt = this.cost(800 + kmh * 60), ff = this.fineCost(FINES.fault);
         const lines = [['impact:' + Math.round(kmh), 0], ['pedHurt', -hurt], ['fineFault', -ff]];
         const total = -hurt - ff;
@@ -312,10 +319,15 @@ export class Taxi {
         if (c.t < 1.2) return;
         this.crash = null;
         if (c.rel < (this.level.freeHit || 0)) return;   // a light knock: nothing to pay on the easier levels (level.js `freeHit`)
-        const kmh = Math.round(c.rel * 3.6);
+        const kmh = Math.round(c.rel * 3.6), share = this.level.crash ?? 1;
+        this.stats.crashes++; this.dirty = true;
+        if (share === 0) {   // Easy: an accident costs nothing (the passenger still minds: stars and the bump cut)
+            if (this.ride && this.ride.ped.state === 'in') this.ride.hits++;
+            this.toast('crashFree', 'warn'); return;
+        }
         const fault = c.wall || c.fault || this.time - this.redT < 4;
         const lines = [['impact:' + kmh, 0]];
-        const own = this.cost(Math.min(14000, c.rel * c.rel * 18)), ff = this.fineCost(FINES.fault);
+        const own = this.cost(Math.min(14000, c.rel * c.rel * 18) * share), ff = this.fineCost(FINES.fault * share);
         let total = 0;
         if (fault) { lines.push(['repairOwn', -own]); total -= own; }
         else lines.push(['repairInsured', 0]);
@@ -327,7 +339,7 @@ export class Taxi {
         this.money += total; this.stats.repairs += -total - (c.car && fault ? ff : 0); this.dirty = true;
         if (this.ride && this.ride.ped.state === 'in') {
             this.ride.hits++;
-            if (fault && c.rel > 6) { const comp = this.cost(200 + c.rel * 40); lines.push(['passengerHurt', -comp]); total -= comp; this.money -= comp; this.stats.repairs += comp; }
+            if (fault && c.rel > 6) { const comp = this.cost((200 + c.rel * 40) * share); lines.push(['passengerHurt', -comp]); total -= comp; this.money -= comp; this.stats.repairs += comp; }
             if (c.rel > 8.5) {   // a real crash: the passenger gets out and does not pay
                 const p = this.ride.ped; p.state = 'gone'; this.ride = null;
                 lines.push(['passengerLeft', 0]);
@@ -336,3 +348,5 @@ export class Taxi {
         this.events.push({ kind: 'crash', title: fault ? (c.car ? 'crashYou' : 'crashWall') : 'crashThem', lines, total });
     }
 }
+// a passenger's stars: 5, minus 1 when late (2 when over 30 s), 1 per bump (max 2), 1 when fined on the way; at least 1
+export function rateRide(late, hits, fines) { return Math.max(1, 5 - (late > 30 ? 2 : late > 0 ? 1 : 0) - Math.min(2, hits) - (fines > 0 ? 1 : 0)); }

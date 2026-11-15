@@ -87,6 +87,11 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   **0.4.3** (owner 2026-11-15: "I gain 12 DH a ride but lose 1000 DH on the road" on Easy): costs `pay` 8 / 15 / 30 / 100 % (then same day: owner's "1/4" meant every cut: `pay` = `fine` 6 / 10 / 15 / 100 %, roadside help's service fee too), `gap` = at most
   one fine per 120 / 60 / 20 / 0 s (sooner = a police warning toast `policeWarn`, the first gap/2 s of a shift too), `freeHit` = knocks
   under 4.2 / 3 m/s cost nothing (Easy / Normal).
+  **0.4.5** (owner 2026-11-15: "still unplayable for kids"): pavement fines only on Real life (`pave: false`); `crash` = share of
+  car / wall accident costs on top of `pay`: Easy 0 (free, toast `crashFree`, still counted), Normal / Hard 0.5. **Stats** (title +
+  pause > Stats, `UI.statsView`): passenger stars per ride (`rateRide`: 5, -1 late (-2 over 30 s), -1 per bump (max 2), -1 fined;
+  on the drop-off card), average rating, rides, fines (count + DH), accidents, last 20 rides in `stats.last` [to, km, paid, stars].
+  Test: `node tests/v045.mjs <folder>`.
 - **Steering (owner request 2026-11-14, 0.4.2: tight turns)**: the taxi cars set `steer` 0.7, `steerFade` 0.02, `steerSlack` 0.22,
   `steerRate` 3.6 (additive spec fields read by `core/src/vehicle.js` `lockAt` / the wheel rate; Asphalt keeps 0.035 / 0.13 / 2.6).
   Lock at 20 / 40 km/h: 36° / 26° (was 30° / 21°). Stick curve ^1.2 (was 1.5), D-pad ramps in ~0.1 s. `node tests/steer.mjs [car] [dir]`.

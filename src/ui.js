@@ -34,12 +34,13 @@ export class UI {
         const st = this.app.saved && this.app.saved.stats;
         this.show(`<div class="title"><div class="logo"><span class="l1">TANGIER</span><span class="l2">TAXI</span></div>
 <div class="tag">${I18n.t('tag')}</div>
-<div class="menu"><div class="btn go" data-f>${I18n.t('start')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div>${st ? `<div class="btn" data-f>${I18n.t('reset')}</div>` : ''}</div>
+<div class="menu"><div class="btn go" data-f>${I18n.t('start')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div>${st ? `<div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('reset')}</div>` : ''}</div>
 <div class="mini">${I18n.t('car')} <b>${this.carLabel()}</b> · ${I18n.t('gearbox')} <b>${this.gearLabel()}</b> · ${I18n.t('level')} <b>${I18n.t('lv_' + this.app.settings.level)}</b></div>
 ${st ? `<div class="mini">${I18n.t('money')} <b>${Math.round(this.app.saved.money)} DH</b> · ${I18n.t('rides')} <b>${st.rides}</b> · ${st.km.toFixed(0)} ${I18n.t('km')}</div>` : ''}
 <div class="foot">${I18n.t('credits')}</div></div>`,
         [() => this.app.startShift(), () => this.settings(() => this.title(1)), () => this.controls(() => this.title(2)),
-            () => this.confirmReset(() => { this.app.resetCareer(); this.title(); }, () => this.title(3))], null, focus);
+            () => this.statsView(this.app.saved.stats, this.app.saved.money, () => this.title(3)),
+            () => this.confirmReset(() => { this.app.resetCareer(); this.title(); }, () => this.title(4))], null, focus);
     }
     carLabel() { return I18n.t('car_' + (this.app.settings.car || 'taxi')); }
     // every setting in one list: OK changes the value; Back leaves (in a shift: a new car or difficulty starts the shift again)
@@ -80,8 +81,23 @@ ${st ? `<div class="mini">${I18n.t('money')} <b>${Math.round(this.app.saved.mone
         const row = (k, v) => `<div class="st"><span>${I18n.t(k)}</span><b>${v}</b></div>`;
         this.show(`<div class="panel pause"><h2>${I18n.t('paused')}</h2>${this.app.bugMsg ? `<p class="bugmsg">${I18n.line(this.app.bugMsg)}</p>` : ''}
 <div class="stats">${row('money', Math.round(T.money) + ' DH')}${row('rides', s.rides)}${row('earned', Math.round(s.earned) + ' DH')}${row('fines', Math.round(s.fines) + ' DH')}${row('repairs', Math.round(s.repairs) + ' DH')}${row('fuelSpent', Math.round(s.fuel) + ' DH')}${row('km', s.km.toFixed(1))}${row('level', I18n.t('lv_' + this.app.settings.level))}</div>
-<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
-        [() => this.app.resumeShift(), () => this.settings(() => this.pause(1)), () => this.controls(() => this.pause(2)), () => this.app.reportBug(),
-            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(4)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
+<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
+        [() => this.app.resumeShift(), () => this.settings(() => this.pause(1)), () => this.controls(() => this.pause(2)),
+            () => this.statsView(T.stats, T.money, () => this.pause(3)), () => this.app.reportBug(),
+            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(5)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
+    }
+    // Stats (owner request 2026-11-15): rides, the passengers' stars (average + each recent ride), fines, accidents, money
+    statsView(s, money, back) {
+        this.screen = 'stats';
+        s = Object.assign({ rides: 0, earned: 0, fines: 0, repairs: 0, fuel: 0, km: 0, best: 0, nFines: 0, crashes: 0, stars: 0, rated: 0, last: [] }, s || {});
+        const row = (k, v) => `<div class="st"><span>${I18n.t(k)}</span><b>${v}</b></div>`;
+        const avg = s.rated ? s.stars / s.rated : 0, full = Math.round(avg);
+        const rides = (s.last || []).slice(0, 8).map(r => `<div class="st ride"><span>${esc(r[0]) || '-'} · ${r[1]} km</span><b>${r[2]} DH <i class="stars">${'★'.repeat(r[3])}${'☆'.repeat(5 - r[3])}</i></b></div>`).join('');
+        this.show(`<div class="panel pause"><h2>${I18n.t('statsT')}</h2>
+<div class="rating"><span class="stars big">${'★'.repeat(full)}${'☆'.repeat(5 - full)}</span> <b>${s.rated ? avg.toFixed(1) : '-'}</b> <span class="small">${I18n.t('ratedN', s.rated)}</span></div>
+<div class="stats">${row('rides', s.rides)}${row('money', Math.round(money || 0) + ' DH')}${row('earned', Math.round(s.earned) + ' DH')}${row('bestRide', Math.round(s.best) + ' DH')}${row('finesN', s.nFines + ' · ' + Math.round(s.fines) + ' DH')}${row('crashesN', s.crashes)}${row('repairs', Math.round(s.repairs) + ' DH')}${row('fuelSpent', Math.round(s.fuel) + ' DH')}${row('km', s.km.toFixed(1))}</div>
+<h3>${I18n.t('lastRides')}</h3><div class="rides">${rides || `<p class="small">${I18n.t('noRides')}</p>`}</div>
+<div class="btn" data-f>${I18n.t('back')}</div></div>`, [back], back);
     }
 }
+const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
