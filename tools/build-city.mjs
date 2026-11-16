@@ -303,18 +303,34 @@ for (const j of JL) {
     lights.push({ j: j.id, ph: phase, off: Math.floor(rnd() * 40) });
 }
 
-// ---- fuel stations: along main roads, spread over the city (farthest-point picking), on the right of the way
+// ---- fuel stations: the real ones (OpenStreetMap amenity=fuel, osm/places.json `fuel`, owner request 2026-11-16: "if there are no
+// stations add them") snapped to the nearest main-ish road (class <= 3, not a roundabout, within 70 m), one per 150 m; then the
+// old farthest-point picking along main roads fills any part of town more than 1.6 km from a station, so the nearest one is never far.
 const cand = [];
 for (const e of E) if (e.cls <= 2 && !e.ra && e.pts.length > 30 && Math.hypot(e.pts[e.pts.length >> 1].x - 2300, e.pts[e.pts.length >> 1].z + 1300) < 3300) cand.push({ e, k: e.pts.length >> 1 });
 const st = [];
-const start = cand.reduce((b, c) => Math.hypot(c.e.pts[c.k].x - 2500, c.e.pts[c.k].z + 1700) < Math.hypot(b.e.pts[b.k].x - 2500, b.e.pts[b.k].z + 1700) ? c : b);
-st.push(start);
-while (st.length < 8) {
+const at = (c) => c.e.pts[c.k];
+const farFromAll = (p, m) => st.every(s => Math.hypot(p.x - at(s).x, p.z - at(s).z) > m);
+if (fs.existsSync('osm/places.json')) {
+    for (const f of JSON.parse(fs.readFileSync('osm/places.json', 'utf8')).fuel || []) {
+        const q = toXY(f.lat, f.lon);
+        let best = null, bd = 70;
+        for (const e of E) { if (e.cls > 3 || e.ra || e.pts.length < 12) continue; for (let k = 4; k < e.pts.length - 4; k++) { const d = Math.hypot(e.pts[k].x - q.x, e.pts[k].z - q.z); if (d < bd) { bd = d; best = { e, k, name: f.n }; } } }
+        if (best && farFromAll(at(best), 150)) st.push(best);
+    }
+}
+const fromOsm = st.length;
+const area = cand.filter(c => Math.hypot(at(c).x - 2300, at(c).z + 1300) < 3300);
+const start0 = area.reduce((b, c) => Math.hypot(at(c).x - 2500, at(c).z + 1700) < Math.hypot(at(b).x - 2500, at(b).z + 1700) ? c : b);
+if (!st.length) st.push(start0);
+for (;;) {
     let best = null, bd = -1;
-    for (const c of cand) { const p = c.e.pts[c.k]; let d = 1e9; for (const s of st) d = Math.min(d, Math.hypot(p.x - s.e.pts[s.k].x, p.z - s.e.pts[s.k].z)); if (d > bd) { bd = d; best = c; } }
+    for (const c of area) { const p = at(c); let d = 1e9; for (const s of st) d = Math.min(d, Math.hypot(p.x - at(s).x, p.z - at(s).z)); if (d > bd) { bd = d; best = c; } }
+    if (bd < 1600 || st.length >= 40) break;
     st.push(best);
 }
-const stations = st.map(s => ({ e: s.e.id, k: s.k, side: -1 }));
+console.log('fuel stations: ' + fromOsm + ' from OpenStreetMap + ' + (st.length - fromOsm) + ' filled in');
+const stations = st.map(s => ({ e: s.e.id, k: s.k, side: -1, name: s.name || '' }));
 for (let b = blds.length - 1; b >= 0; b--) { const p = blds[b].p[0]; if (st.some(s => Math.hypot(s.e.pts[s.k].x - p[0], s.e.pts[s.k].z - p[1]) < 26)) blds.splice(b, 1); }
 
 // ---- pavement width per side and sample: two streets side by side (a dual carriageway, a parallel lane) share the

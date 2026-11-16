@@ -2,7 +2,7 @@
 // green), speed / gear / revs / fuel / limiter, the ride (where to, time, meter), what A does now, and cards for
 // fines, accidents and paid rides. DOM, rewritten about 12 times a second (text only when it changes).
 import { I18n } from './i18n.js';
-import { FUEL_PRICE } from './taxi.js';
+import { FUEL_PRICE, ORANGE } from './taxi.js';
 import { Gauges, turnArrow } from './gauges.js';
 
 const MPP = 5;        // map: metres per pixel of the pre-drawn city
@@ -25,6 +25,7 @@ export class Hud {
         this.turn = el('h-turn', r); this.turnC = el('', this.turn, 'canvas'); this.turnC.width = this.turnC.height = 96; this.turnX = this.turnC.getContext('2d');
         this.turnD = el('d', this.turn); this.turnN = el('n', this.turn);
         this.ride = el('h-ride', r);
+        this.fuelW = el('h-fuelw', r);
         this.prompt = el('h-prompt', r);
         this.cards = el('h-cards', r);
         this.toastE = el('h-toast', r);
@@ -82,7 +83,7 @@ export class Hud {
         // the instrument cluster
         const g = v.gearbox ? (v.mgear < 0 ? 'R' : v.mgear === 0 ? 'N' : String(v.mgear)) : (v.reverse ? 'R' : 'D' + v.gear);
         const G = this.gs;
-        G.kmh = kmh; G.rpm = v.rpm; G.maxRpm = v.spec.rpm; G.gear = g; G.fuel = T.fuel; G.tank = T.tank; G.low = T.fuel < 4;
+        G.kmh = kmh; G.rpm = v.rpm; G.maxRpm = v.spec.rpm; G.gear = g; G.fuel = T.fuel; G.tank = T.tank; G.low = T.fuel < 4; G.warn = T.fuel < ORANGE;
         G.hand = v.input.handbrake > 0 || v.hold; G.engine = !!(v.stalled || v.fuelCut); G.limiter = T.limiter; G.clutchBox = v.gearbox === 'clutch';
         G.clutch = (v.input.clutch || 0) > 0.5; G.ride = !!(T.ride && T.ride.ped.state === 'in'); G.over = !!(lim && kmh > lim + 5);
         this.gauges.draw(G);
@@ -92,12 +93,18 @@ export class Hud {
             const k = tn.dir + (tn.dist < 30 ? 'n' : '');
             if (this.cache.turnK !== k) { this.cache.turnK = k; turnArrow(this.turnX, tn.dir); }
             this.set(this.turnD, 'turnD', I18n.t(tn.dir === 'arrive' ? 'arrive' : tn.dir === 'uturn' ? 'turnU' : tn.dir === 'left' ? 'turnL' : 'turnR') + ' · ' + I18n.t('inM', Math.max(0, Math.round(tn.dist / 10) * 10)));
-            this.set(this.turnN, 'turnN', tn.edge >= 0 ? S.net.edgeName(tn.edge, I18n.lang) : (T.ride && T.ride.name) || '');
+            this.set(this.turnN, 'turnN', tn.edge >= 0 ? S.net.edgeName(tn.edge, I18n.lang) : ((T.fuelGo || T.ride) && (T.fuelGo ? (T.fuelGo.name || I18n.t('fuelStation')) : T.ride.name)) || '');
             this.turn.className = 'h-turn on' + (tn.dist < 40 ? ' near' : '');
         } else if (this.turn.className !== 'h-turn') this.turn.className = 'h-turn';
         // ride
-        const R = T.ride;
-        if (R && R.ped.state === 'in') {
+        const R = T.ride, FG = T.fuelGo;
+        // the orange fuel warning stays on screen until the tank is above 10 L (or while following the way to a station)
+        const fw = T.fuel < ORANGE && !FG && !T.refuel ? I18n.t(T.fuel < 4 ? 'fuelWarnRed' : 'fuelWarn') : '';
+        this.set(this.fuelW, 'fuelW', fw); this.fuelW.className = 'h-fuelw' + (fw ? ' on' + (T.fuel < 4 ? ' red' : '') : '');
+        if (FG) {
+            const txt = I18n.t('toFuel', FG.name || I18n.t('fuelStation')) + '\n' + ((FG.route ? FG.route.len : 0) / 1000).toFixed(1) + ' km · ' + FUEL_PRICE + ' DH/L';
+            this.set(this.ride, 'ride', txt); this.ride.className = 'h-ride on fuel';
+        } else if (R && R.ped.state === 'in') {
             const left = Math.max(0, R.eta - R.t);
             const d = R.route ? R.route.len : 0;
             const txt = I18n.t('to') + ' ' + (R.name || '—') + '\n' + (d / 1000).toFixed(1) + ' km · ' + (left > 0 ? I18n.t('eta') + ' ' + Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0') : I18n.t('late')) + '\n' + I18n.t('fare') + ' ' + T.meter() + ' DH';
@@ -128,7 +135,7 @@ export class Hud {
         const px = (v.px - B.x0) / MPP, pz = (v.pz - B.z0) / MPP;
         x.drawImage(this.base, -px, -pz);
         // route
-        const R = T.ride;
+        const R = T.fuelGo || T.ride;
         if (R && R.route && R.ped.state === 'in') {
             x.strokeStyle = '#2cff8f'; x.lineWidth = 3.2 / k; x.beginPath();
             // from the taxi along the route: the first street only ahead of the taxi, the last one only up to the stop

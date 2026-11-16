@@ -103,6 +103,8 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
   **`node tools/roadbot.mjs <out> --minutes 20`** writes report.md / report.json / shots / map.png. How to run it and the fixing loop:
   **docs/ROADBOT.md**. Out folders are not committed.
 
+- **0.4.7 (owner 2026-11-16: gas station directions)**: Pause > **Go fuel up** (`Taxi.goFuel`, toggles) routes to the nearest station (shortest of the 5 closest by `net.route`): green arrows + turn sign + beacon + map line + a "To <name>" box (`taxi.fuelGo`, refreshed every 4 s, ends at the pump). At the pump A refuels (13.4 DH/L from the cash). Stations: `tools/build-city.mjs` snaps OSM `fuel` places (15) and fills gaps so every area is within 1.6 km (17 now). **Orange warning** under `ORANGE` = 10 L: toast + HUD chip + orange gauge arc / FUEL lamp (red under 4 L). Test: `node tests/v046.mjs <folder>`. Pause menu indexes: Resume 0, Go fuel up 1, Settings 2, Controls 3, Stats 4, Report a bug 5, Start over 6, End 7.
+
 ## Stage 2 (planned)
 Garage with upgrades that change the part's look (TV-safe layout), real fuel station places from OSM, turn-by-turn hints,
 night shifts, remappable controls.

@@ -95,12 +95,12 @@ check(globalThis.cars_easy <= globalThis.cars_normal && globalThis.cars_normal <
     await P.evaluate(() => window.TT.pauseShift());
     await P.waitForTimeout(300);
     await P.screenshot({ path: out + '/5-pause.png' });
-    await P.evaluate(() => { const U = window.TT.ui; U.f = 1; U.paint(); U.input('confirm', 'keys'); });
+    await P.evaluate(() => { const U = window.TT.ui; U.f = 2; U.paint(); U.input('confirm', 'keys'); });
     await P.waitForTimeout(300);
     const pr = await P.evaluate(() => [...document.querySelectorAll('.ui [data-f]')].map(e => e.textContent));
     check(pr.length === 7 && /Speed limiter/.test(pr.join()), 'pause > Settings: every setting + the limiter', pr);
     await P.screenshot({ path: out + '/6-pause-settings.png' });
-    await P.evaluate(() => { const U = window.TT.ui; U.input('cancel', 'keys'); U.f = 2; U.paint(); U.input('confirm', 'keys'); });
+    await P.evaluate(() => { const U = window.TT.ui; U.input('cancel', 'keys'); U.f = 3; U.paint(); U.input('confirm', 'keys'); });
     await P.waitForTimeout(200);
     await P.evaluate(() => window.TT.input.onButton(17, true, 1, 'pad0')); await P.waitForTimeout(300); await P.evaluate(() => window.TT.input.onButton(17, false, 0, 'pad0'));
     await P.waitForTimeout(300);

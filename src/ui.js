@@ -2,6 +2,7 @@
 // chosen with OK / A; Back / B goes back. Works with the TV remote alone.
 import { I18n } from './i18n.js';
 import { LEVEL_IDS } from './level.js';
+import { ORANGE } from './taxi.js';
 
 const next = (list, v) => list[(list.indexOf(v) + 1) % list.length];
 
@@ -81,10 +82,11 @@ ${st ? `<div class="mini">${I18n.t('money')} <b>${Math.round(this.app.saved.mone
         const row = (k, v) => `<div class="st"><span>${I18n.t(k)}</span><b>${v}</b></div>`;
         this.show(`<div class="panel pause"><h2>${I18n.t('paused')}</h2>${this.app.bugMsg ? `<p class="bugmsg">${I18n.line(this.app.bugMsg)}</p>` : ''}
 <div class="stats">${row('money', Math.round(T.money) + ' DH')}${row('rides', s.rides)}${row('earned', Math.round(s.earned) + ' DH')}${row('fines', Math.round(s.fines) + ' DH')}${row('repairs', Math.round(s.repairs) + ' DH')}${row('fuelSpent', Math.round(s.fuel) + ' DH')}${row('km', s.km.toFixed(1))}${row('level', I18n.t('lv_' + this.app.settings.level))}</div>
-<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
-        [() => this.app.resumeShift(), () => this.settings(() => this.pause(1)), () => this.controls(() => this.pause(2)),
-            () => this.statsView(T.stats, T.money, () => this.pause(3)), () => this.app.reportBug(),
-            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(5)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
+<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn${T.fuel < ORANGE ? ' warnbtn' : ''}" data-f>${I18n.t(T.fuelGo ? 'goFuelOff' : 'goFuel')}${T.fuelGo ? '' : ' <b>' + Math.round(T.fuel) + ' / ' + T.tank + ' L</b>'}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
+        [() => this.app.resumeShift(), () => { const sh = this.app.shift; T.goFuel(sh.me.veh, sh.qp); this.app.resumeShift(); },
+            () => this.settings(() => this.pause(2)), () => this.controls(() => this.pause(3)),
+            () => this.statsView(T.stats, T.money, () => this.pause(4)), () => this.app.reportBug(),
+            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(6)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
     }
     // Stats (owner request 2026-11-15): rides, the passengers' stars (average + each recent ride), fines, accidents, money
     statsView(s, money, back) {

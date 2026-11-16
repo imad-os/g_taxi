@@ -67,7 +67,7 @@ export class Gauges {
         x.drawImage(this.face, 0, 0);
         // fuel: the arc under the hub fills from E (left) to F (right)
         const ff = Math.max(0, Math.min(1, s.fuel / s.tank)), a1 = 0.66 * Math.PI, fang = a1 - ff * 0.32 * Math.PI;
-        x.strokeStyle = s.low ? '#ff4b3e' : '#3ad07a'; x.lineWidth = 9; x.beginPath(); x.arc(T.x, T.y, T.r * 0.84, a1, fang, true); x.stroke();
+        x.strokeStyle = s.low ? '#ff4b3e' : s.warn ? '#ffa31a' : '#3ad07a'; x.lineWidth = 9; x.beginPath(); x.arc(T.x, T.y, T.r * 0.84, a1, fang, true); x.stroke();
         // gear and speed
         x.textAlign = 'center'; x.textBaseline = 'middle';
         x.fillStyle = '#f2c418'; x.font = FONT(56); x.fillText(s.gear, T.x, T.y + T.r * 0.42);
@@ -79,7 +79,7 @@ export class Gauges {
         x.fillStyle = 'rgba(7,11,18,.78)'; x.beginPath(); x.roundRect ? x.roundRect(28, y - 21, 584, 42, 12) : x.rect(28, y - 21, 584, 42); x.fill();
         this.lamp(70, y, 'P', s.hand, '#ff4b3e');
         this.lamp(140, y, 'ENG', s.engine, '#f2a818');
-        this.lamp(222, y, 'FUEL', s.low, '#f2a818');
+        this.lamp(222, y, 'FUEL', s.low || s.warn, s.low ? '#ff4b3e' : '#ffa31a');
         if (s.clutchBox) this.lamp(292, y, 'C', s.clutch, '#8fdcf0');
         this.lamp(392, y, s.limiter ? 'LIM ' + s.limiter : 'LIM', !!s.limiter, '#2cff8f');
         this.lamp(505, y, 'TAXI', true, s.ride ? '#ff4b3e' : '#2cff8f');

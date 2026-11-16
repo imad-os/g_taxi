@@ -6,7 +6,7 @@
   "type": "game",
   "entry": "index.html",
   "icon": "icon.svg",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "scores": true,
   "config": { "orientation": "landscape" }
 }

@@ -5,6 +5,7 @@
 
 export const FUEL_PRICE = 13.4;      // DH per litre (diesel at the pump, 2026)
 const TANK = 40;                     // litres
+export const ORANGE = 10;            // the orange level: warnings below this many litres (red below 4)
 const BURN = 4;                      // game time runs faster than a real shift: fuel burns 4x (a tank lasts ~3 h of play)
 export const FARE = { flag: 14, km: 8 };   // DH: pick-up + per km on the meter (owner 2026-11-15: twice 0.4's 7 + 4)
 // fines (DH), code de la route (loi 52-05): classes 700 / 500 / 300; speeding by how far over the limit
@@ -37,6 +38,8 @@ export class Taxi {
         this.lastE = -1; this.lastRem = 1e9; this.lastJ = -1;
         this.crash = null;           // accident being assessed (hits within 1.2 s count as one)
         this.refuel = false; this.helpT = 0;
+        this.fuelGo = null;          // Pause > Go fuel up: { e, s, x, y, z, route, name, ped: { state: 'in' } } (arrows + map line to the nearest station)
+        this.warnT = 0;
         this.redT = -10; this.wrongNow = 0;
         this.time = 0;
         this.dirty = false;
@@ -122,6 +125,7 @@ export class Taxi {
         this.speeding = this.overT > 0;
         this.peopleTick(dt, v, q);
         this.crashTick(dt);
+        this.fuelGoTick(v);
         // what A does now
         this.prompt = '';
         if (v.fuelCut && this.fuel <= 0.01) this.prompt = this.helpT > 0 ? 'helpWait' : 'help';
@@ -154,7 +158,12 @@ export class Taxi {
         const lph = 0.7 + 0.26 * kw;
         this.fuel -= lph / 3600 * dt * BURN;
         if (this.fuel <= 0) { this.fuel = 0; v.fuelCut = true; this.toast('outOfFuel', 'bad'); this.dirty = true; }
-        if (this.fuel < 4 && !this.lowSaid) { this.lowSaid = true; this.toast('lowFuel', 'warn'); }
+        // orange (< 10 L, a quarter of the tank): a warning now and every 45 s until fuelled (or following the arrows); red below 4 L
+        if (this.fuel < ORANGE) {
+            if (!this.orangeSaid) { this.orangeSaid = true; this.warnT = 45; this.toast('fuelOrange', 'warn'); }
+            else if (!this.fuelGo && (this.warnT -= dt) <= 0) { this.warnT = 45; this.toast('fuelOrange', 'warn'); }
+        } else if (this.fuel > ORANGE + 2) this.orangeSaid = false;
+        if (this.fuel < 4 && !this.lowSaid) { this.lowSaid = true; this.toast('lowFuel', 'bad'); }
         if (this.fuel > 6) this.lowSaid = false;
     }
     stopRefuel() {
@@ -169,6 +178,29 @@ export class Taxi {
             if (Math.hypot(net.px[i] - v.px, net.pz[i] - v.pz) < 16) return true;
         }
         return false;
+    }
+
+    // ---- Pause > Go fuel up (owner request 2026-11-16): green arrows + the map line to the nearest station by road ----
+    goFuel(v, q) {
+        if (this.fuelGo) { this.fuelGo = null; this.toast('fuelGuideOff', 'info'); return; }
+        const net = this.net;
+        if (q.edge < 0 || !net.stations.length) { this.toast('fuelNoWay', 'bad'); return; }
+        const heading = (v.R[6] * q.fx + v.R[8] * q.fz) >= 0 ? 1 : -1;
+        const list = net.stations.map(s => { const i = net.eOff[s.e] + s.k; return { s, i, d: Math.hypot(net.px[i] - v.px, net.pz[i] - v.pz) }; }).sort((a, b) => a.d - b.d).slice(0, 5);
+        let best = null;
+        for (const c of list) {
+            const sp = net.sS[c.i], r = net.route(q.edge, q.s, heading, c.s.e, sp);
+            if (r && (!best || r.len < best.route.len)) best = { c, sp, route: r };
+        }
+        if (!best) { this.toast('fuelNoWay', 'bad'); return; }
+        const i = best.c.i;
+        this.fuelGo = { e: best.c.s.e, s: best.sp, x: net.px[i], y: net.py[i], z: net.pz[i], route: best.route, left: best.route.len, name: best.c.s.name || '', ped: { state: 'in' } };
+        this.toast('fuelGuide', 'ok');
+    }
+    // the guidance ends at the pump or when the tank is full
+    fuelGoTick(v) {
+        if (!this.fuelGo) return;
+        if (this.fuel >= this.tank - 0.5 || this.refuel || (this.nearStation(v) && Math.abs(v.fwdSpeed) < 8)) { this.fuelGo = null; if (this.fuel < this.tank - 0.5) this.toast('fuelArrived', 'ok'); }
     }
 
     // ---- A: the action of the moment ----

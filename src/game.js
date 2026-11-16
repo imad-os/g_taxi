@@ -171,7 +171,14 @@ export class Shift {
             const r = net.route(this.qp.edge, this.qp.s, heading, R.e, R.s);
             if (r) { R.route = r; R.left = r.len; this.guide.t = 0; }
         }
-        this.guide.update(dt, taxi.ride, this.qp, this.arrows, (v.R[6] * this.qp.fx + v.R[8] * this.qp.fz) >= 0 ? 1 : -1);
+        // Pause > Go fuel up: its route is kept fresh like a passenger's
+        const G = taxi.fuelGo;
+        if (G && (this.fuelT = (this.fuelT || 0) - dt) <= 0 && this.qp.edge >= 0) {
+            this.fuelT = 4;
+            const r = net.route(this.qp.edge, this.qp.s, (v.R[6] * this.qp.fx + v.R[8] * this.qp.fz) >= 0 ? 1 : -1, G.e, G.s);
+            if (r) { G.route = r; G.left = r.len; this.guide.t = 0; }
+        }
+        this.guide.update(dt, G || taxi.ride, this.qp, this.arrows || !!G, (v.R[6] * this.qp.fx + v.R[8] * this.qp.fz) >= 0 ? 1 : -1);
         if ((this.lightT -= dt) <= 0) { this.lightT = 0.25; this.city.setLamps((L, ph) => lightState(net, L, ph, this.traffic.t)); }
         U.uTime.value += dt;
         // tyres: skid marks and smoke for the taxi
@@ -188,7 +195,7 @@ export class Shift {
         this.people.update(dt, taxi.peds, this.walkers.list, this.cam.cam.position);
         this.cam.update(dt, me);
         // beacon over the destination
-        const R = taxi.ride;
+        const R = taxi.fuelGo || taxi.ride;
         this.beacon.visible = !!(R && R.ped.state === 'in');
         if (this.beacon.visible) this.beacon.position.set(R.x, R.y, R.z);
     }

@@ -97,3 +97,10 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .rides .st { display: flex; justify-content: space-between; gap: calc(var(--u) * 2); border-bottom: 1px solid var(--line); padding-bottom: calc(var(--u) * .4); }
 .rides .st span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rides .st b { white-space: nowrap; }
+
+.h-fuelw { position: absolute; right: calc(var(--u) * 3.5); bottom: calc(var(--u) * 26); max-width: calc(var(--u) * 42); display: none; background: rgba(40, 24, 0, .82); color: #ffa31a; border: calc(var(--u) * .25) solid #ffa31a;
+  border-radius: calc(var(--u) * 1.2); padding: calc(var(--u) * 1) calc(var(--u) * 2); font-size: calc(var(--u) * 2.2); font-weight: 700; text-align: center; }
+.h-fuelw.on { display: block; animation: blink 1.2s infinite; }
+.h-fuelw.red { background: rgba(50, 8, 4, .88); color: #ff6a5e; border-color: #ff4b3e; animation-duration: .6s; }
+.h-ride.fuel { border-left-color: #ffa31a; }
+.btn.warnbtn { border-color: #ffa31a; box-shadow: 0 0 0 calc(var(--u) * .2) rgba(255, 163, 26, .5); }

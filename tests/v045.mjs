@@ -29,7 +29,7 @@ await P.waitForTimeout(800);
 await P.screenshot({ path: out + '/1-ride-stars.png' });
 await P.evaluate(() => window.TT.pauseShift());
 await P.waitForTimeout(300);
-await P.evaluate(() => { const U = window.TT.ui; U.f = 3; U.paint(); U.input('confirm', 'keys'); });
+await P.evaluate(() => { const U = window.TT.ui; U.f = 4; U.paint(); U.input('confirm', 'keys'); });
 await P.waitForTimeout(400);
 const txt = await P.evaluate(() => window.TT.ui.screen + ' | ' + document.querySelector('.ui .panel').textContent);
 check(/^stats/.test(txt) && /3\.5/.test(txt) && /Rue Test 0/.test(txt) && /Accidents1/.test(txt), 'pause > Stats: average 3.5, the rides, accidents', txt.slice(0, 300));
