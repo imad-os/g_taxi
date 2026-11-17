@@ -1,7 +1,10 @@
 // Opens the game in Chromium (SDK from the local My PC checkout, standalone mode) and saves screenshots.
 // node tests/shot.mjs <url query> <out.png> [waitMs] [keys...]
 import { createRequire } from 'node:module';
-const { chromium } = createRequire(import.meta.url)('playwright');
+const req = createRequire(import.meta.url);
+let playwrightMod;
+try { playwrightMod = req('playwright'); } catch { playwrightMod = req('/usr/local/share/bun-global/node_modules/playwright'); }
+const { chromium } = playwrightMod;
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,8 +32,8 @@ export function serve(port) {
     });
 }
 export async function open(query, opts = {}) {
-    // a free port (PORT=... to pick one): 8765 may already be taken by another local server
-    const port = opts.port || +process.env.PORT || 8765 + Math.floor(Math.random() * 200);
+    // a free port (SHOT_PORT=... to pick one): 8765 may already be taken by another local server
+    const port = opts.port || +process.env.SHOT_PORT || 8765 + Math.floor(Math.random() * 200);
     const server = await serve(port);
     // GPU=1: the machine's own graphics chip, for frame rates on a PC; else SwiftShader (no GPU)
     const gpu = !!process.env.GPU;
@@ -39,7 +42,7 @@ export async function open(query, opts = {}) {
         args: gpu ? ['--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=' + (process.platform === 'win32' ? 'd3d11' : 'default'), '--autoplay-policy=no-user-gesture-required']
         : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
     const page = await browser.newPage({ viewport: { width: opts.w || 1280, height: opts.h || 720 }, deviceScaleFactor: 1 });
-    await page.route('**/mypc-sdk.js', r => r.fulfill({ path: SDK, contentType: 'text/javascript' }));
+    if (fs.existsSync(SDK)) await page.route('**/mypc-sdk.js', r => r.fulfill({ path: SDK, contentType: 'text/javascript' }));
     let nlog = 0; page.on('console', m => { if (nlog++ > 40) return; if (m.type() === 'error' || m.type() === 'warning' || opts.log) console.log('[page]', m.type(), m.text().slice(0, 300)); });
     page.on('pageerror', e => console.log('[pageerror]', e.message));
     await page.goto('http://localhost:' + port + '/index.html' + query);

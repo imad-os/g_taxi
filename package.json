@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node tools/serve.mjs",
+    "start": "node tools/serve.mjs",
     "build": "node tools/build.mjs",
     "city": "node tools/build-city.mjs"
   },
