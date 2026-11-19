@@ -8,5 +8,6 @@
   "icon": "icon.svg",
   "version": "0.7.0",
   "scores": true,
-  "config": { "orientation": "landscape" }
+  "config": { "orientation": "landscape" },
+  "offline": ["index.html", "mypc-app.json", "icon.svg", "css/", "dist/", "assets/", "fonts/"]
 }
