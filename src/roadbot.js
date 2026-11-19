@@ -24,8 +24,8 @@ export class RoadBot {
         this.path = null;            // { x: [], z: [], e: [], len } points every 2 m along the route, right lane
         this.k = 0;                  // index of the path point nearest the car
         this.found = []; this.seen = new Set(); this.shots = []; this.pics = {}; this.n = 0;
-        this.trail = []; this.tt = 0; this.ct = 0; this.stuckT = 0; this.lostT = 0; this.offT = 0;
-        this.trips = 0; this.km = 0; this.lx = null; this.lz = null; this.t = 0;
+        this.trail = []; this.driven = []; this.tt = 0; this.ct = 0; this.stuckT = 0; this.lostT = 0; this.offT = 0;
+        this.trips = 0; this.km = 0; this.lx = null; this.lz = null; this.dxPrev = null; this.dzPrev = null; this.t = 0;
         this.ray = new THREE.Raycaster(); this.ray.far = 14; this.v3 = new THREE.Vector3(); this.down = new THREE.Vector3(0, -1, 0);
         this.q = {}; this.a = {};
         this.status = 'start';
@@ -35,6 +35,18 @@ export class RoadBot {
         const net = this.net, hw = net.eHw[e];
         if (net.eOne[e]) return hw > 3.9 ? -(hw - 1.9) : 0;
         return -dir * Math.min(hw * 0.5, 2.5);
+    }
+
+    recordDriven(x, z) {
+        if (x === null) {
+            if (this.driven.length && this.driven[this.driven.length - 1] !== null) this.driven.push(null);
+            this.dxPrev = null; this.dzPrev = null;
+            return;
+        }
+        if (this.dxPrev === null || (x - this.dxPrev) ** 2 + (z - this.dzPrev) ** 2 >= 4) {
+            this.driven.push([r2(x), r2(z)]);
+            this.dxPrev = x; this.dzPrev = z;
+        }
     }
 
     // ---- the plan ----
@@ -47,7 +59,12 @@ export class RoadBot {
             net.query(v.px + Math.sin(ang) * dist, v.pz + Math.cos(ang) * dist, -1, this.q);
             const e = this.q.edge; if (e < 0 || net.eLen[e] < 8 || net.eCls[e] >= 6) continue;
             const r = net.route(q.edge, q.s, hd, e, net.eLen[e] / 2);
-            if (!r || r.len < 150 || r.len > 4000) continue;
+            if (!r) {
+                net.at(e, net.eLen[e] / 2, 0, this.a);
+                this.note('cut', v.px, v.py, v.pz, q.edge, 'no route from #' + q.edge + ' to #' + e + ' (' + (net.edgeName(e, 'en') || '#' + e) + ')');
+                continue;
+            }
+            if (r.len < 150 || r.len > 4000) continue;
             this.build(r);
             this.dest = { e, name: net.edgeName(e, 'en') || '#' + e };
             this.status = 'trip ' + (this.trips + 1) + ' to ' + this.dest.name + ' (' + Math.round(r.len) + ' m)';
@@ -86,9 +103,9 @@ export class RoadBot {
         this.path = { x: X, z: Z, e: E, d: D, n: X.length, edges: new Set(r.edges.map(x => x[0])) };
         this.k = 0;
     }
-    kinks(e) {
+    kinks(e, quiet = true) {
         const net = this.net, a = this.a, L = net.eLen[e];
-        if (this.kinked && this.kinked.has(e)) return;
+        if (quiet && this.kinked && this.kinked.has(e)) return;
         (this.kinked || (this.kinked = new Set())).add(e);
         if (L < 8) return;
         const sStart = Math.min(L * 0.25, Math.max(2, net.jr[net.eA[e]] * 0.6));
@@ -99,7 +116,7 @@ export class RoadBot {
             if (h0 !== null) {
                 net.at(e, Math.min(L, s + 8), 0, this.q); const h2 = Math.atan2(this.q.fx, this.q.fz);
                 let dh = Math.abs(h2 - h0); if (dh > Math.PI) dh = 2 * Math.PI - dh;
-                if (dh > 1.22) { this.note('kink', a.x, a.y, a.z, e, 'street turns ' + Math.round(dh * 57.3) + '° within 10 m at s=' + Math.round(s), true); return; }
+                if (dh > 1.22) { this.note('kink', a.x, a.y, a.z, e, 'street turns ' + Math.round(dh * 57.3) + '° within 10 m at s=' + Math.round(s), quiet); return; }
             }
             h0 = h;
         }
@@ -110,6 +127,7 @@ export class RoadBot {
         const S = this.S, v = S.me.veh, net = this.net, T = S.taxi;
         if (!(S.qp.edge >= 0)) return;   // the first tick: nothing known under the car yet
         this.t += dt;
+        this.recordDriven(v.px, v.pz);
         T.fuel = 40; T.money = Math.max(T.money, 1000);
         if (!this.path || this.k >= this.path.n - 3) {
             if (this.path) { this.trips++; }
@@ -153,9 +171,11 @@ export class RoadBot {
             const e = targetEdge >= 0 ? targetEdge : Math.floor(this.rnd() * net.ne);
             if (targetEdge === undefined && (net.eLen[e] < 40 || net.eCls[e] >= 6)) continue;
             net.at(e, net.eLen[e] / 2, this.laneOffset(e, 1), a);
+            this.recordDriven(null, null);
             v.setPose(a.x, a.y + v.cgY + 0.45, a.z, Math.atan2(a.fx, a.fz));
             v.vx = v.vy = v.vz = 0;
             net.query(a.x, a.z, e, this.S.qp);
+            this.recordDriven(a.x, a.z);
             this.path = null; this.stuckT = 0; this.lostT = 0; this.trail.length = 0; this.lx = null;
             this.S.city.stream(a.x, a.z, 0, true);
             return;
@@ -163,13 +183,32 @@ export class RoadBot {
     }
 
     // warp to inspect a specific coordinate/edge in the 3D scene (for patrol verification + screenshots)
-    warpTo(x, z, edge) {
+    warpTo(x, z, edge, approachDist = 0, keepLat = false) {
         const net = this.net, S = this.S, v = S.me.veh, q = this.q;
         net.query(x, z, edge >= 0 ? edge : -1, q);
-        const yaw = Math.atan2(q.fx || 0, q.fz || 1);
+        let fx = q.fx || 0, fz = q.fz || 1;
+        if (approachDist > 0 && q.edge >= 0) {
+            if (keepLat) {
+                const px = x - fx * approachDist, pz = z - fz * approachDist;
+                net.query(px, pz, -1, q);
+                if (q.edge >= 0) { x = px; z = pz; }
+            } else {
+                const sBack = Math.max(0, q.s - approachDist);
+                net.at(q.edge, sBack, 0, this.a);
+                const dx = x - this.a.x, dz = z - this.a.z, dl = Math.hypot(dx, dz);
+                if (dl > 1) {
+                    fx = dx / dl; fz = dz / dl;
+                    x = this.a.x; z = this.a.z;
+                    net.query(x, z, q.edge, q);
+                }
+            }
+        }
+        const yaw = Math.atan2(fx, fz);
+        this.recordDriven(null, null);
         v.setPose(x, q.y + v.cgY + 0.45, z, yaw);
         v.vx = v.vy = v.vz = 0;
         net.query(x, z, edge >= 0 ? edge : -1, S.qp);
+        this.recordDriven(x, z);
         this.path = null; this.stuckT = 0; this.lostT = 0; this.trail.length = 0; this.lx = null;
         S.city.stream(x, z, 0, true);
         for (let k = 0; k < 60; k++) S.cam.update(0.05, S.me);
@@ -197,15 +236,17 @@ export class RoadBot {
             if (P && q.edge >= 0 && q.junc < 0 && !P.edges.has(q.edge)) { if ((this.lostT += 0.25) >= 3) { this.note('lost', v.px, v.py, v.pz, q.edge, 'on #' + q.edge + ', not on the route'); this.path = null; this.lostT = 0; } }
             else this.lostT = 0;
         }
-        // the drawn surface across the road 8 m ahead, once a second
-        if ((this.ct -= dt) <= 0) { this.ct = 1; this.surface(v); }
+        // the drawn surface across the road 0..16 m ahead
+        if ((this.ct -= dt) <= 0) { this.ct = 0.4; this.surface(v); }
     }
     skip(m) {
         const P = this.path, v = this.S.me.veh; if (!P) return this.jump();
         const k = Math.min(P.n - 2, this.k + Math.round(m / 2));
         const h = Math.atan2(P.x[k + 1] - P.x[k], P.z[k + 1] - P.z[k]);
         net0(this.net, P.x[k], P.z[k], this.q);
+        this.recordDriven(null, null);
         v.setPose(P.x[k], this.q.y + v.cgY + 0.45, P.z[k], h); v.vx = v.vy = v.vz = 0;
+        this.recordDriven(P.x[k], P.z[k]);
         this.k = k; this.stuckT = 0;
     }
     surface(v) {
@@ -213,16 +254,16 @@ export class RoadBot {
         const ms = [];
         for (const c of S.city.live) if (c.built && Math.abs(c.cx - v.px) < 130 && Math.abs(c.cz - v.pz) < 130) for (const m of c.built.meshes) if (m.userData.kind === 'road' || m.userData.kind === 'core') ms.push(m);
         if (!ms.length) return;
-        for (const ahead of [8, 16]) for (let b = -2; b <= 2; b++) {
-            const x = v.px + fx * ahead + lx * b * 2.5, z = v.pz + fz * ahead + lz * b * 2.5;
+        for (const ahead of [0, 4, 8, 12, 16]) for (let b = -2; b <= 2; b++) {
+            const x = v.px + fx * ahead + lx * b * 2.2, z = v.pz + fz * ahead + lz * b * 2.2;
             net.query(x, z, -1, q);
-            if (q.edge < 0) continue;
+            if (q.edge < 0 || q.off !== 0) continue;
             // only treat as asphalt if inside the street width or inside the drawn junction disc (jr + 0.2)
             const inside = q.junc >= 0
-                ? (net.jEdges[q.junc].length >= 3 && Math.hypot(x - net.jx[q.junc], z - net.jz[q.junc]) <= net.jr[q.junc] + 0.2) || Math.abs(q.d) < net.eHw[q.edge] - 0.4
-                : Math.abs(q.d) < net.eHw[q.edge] - 0.4;
+                ? (net.jEdges[q.junc].length >= 3 && Math.hypot(x - net.jx[q.junc], z - net.jz[q.junc]) <= net.jr[q.junc] + 0.2) || Math.abs(q.d) < net.eHw[q.edge] - 0.08
+                : Math.abs(q.d) < net.eHw[q.edge] - 0.08;
             if (!inside) continue;
-            this.v3.set(x, q.y + 6, z); this.ray.set(this.v3, this.down);
+            this.v3.set(x, q.y + 2.2, z); this.ray.set(this.v3, this.down);
             const hit = this.ray.intersectObjects(ms, false)[0];
             if (!hit) { this.note('hole', x, q.y, z, q.edge, 'nothing drawn under asphalt'); continue; }
             const dy = hit.point.y - q.y;
@@ -230,7 +271,8 @@ export class RoadBot {
                 const col = hit.object.geometry.attributes.col, f = hit.face;
                 const r = col.getX(f.a), g = col.getY(f.a), bl = col.getZ(f.a);   // normalized 0..1
                 const green = g > r + 0.02 && g > bl + 0.1, sand = r > 0.7 && bl < 0.68 && Math.abs(r - g) < 0.1;
-                if ((green || sand) && dy > -0.05) this.note('grass', x, hit.point.y, z, q.edge, (green ? 'grass' : 'ground') + ' drawn ' + dy.toFixed(2) + ' m over the asphalt' + (q.junc >= 0 ? ' (junction ' + q.junc + ')' : ''));
+                const dirt = r > g && g > bl + 0.05 && r < 0.65 && g < 0.58;
+                if ((green || sand || dirt) && dy > -0.05) this.note('grass', x, hit.point.y, z, q.edge, (green ? 'grass' : 'ground') + ' drawn ' + dy.toFixed(2) + ' m over the asphalt' + (q.junc >= 0 ? ' (junction ' + q.junc + ')' : ''));
                 else if (dy > 0.15) this.note('height', x, hit.point.y, z, q.edge, 'pavement / object ' + dy.toFixed(2) + ' m over the asphalt');
             } else if (Math.abs(dy) > 0.15) this.note('height', x, hit.point.y, z, q.edge, 'drawn road ' + dy.toFixed(2) + ' m from the driven road');
         }
@@ -558,9 +600,120 @@ export class RoadBot {
         };
     }
 
+    checkJunctionHeight(j) {
+        const net = this.net, q = this.q, x = net.jx[j], z = net.jz[j], r = net.jr[j], y = net.jy[j];
+        let worstH = 0;
+        for (let a = 0; a < 8; a++) for (const f of [0, 0.7]) {
+            const sx = x + Math.cos(a * Math.PI / 4) * r * f, sz = z + Math.sin(a * Math.PI / 4) * r * f;
+            net.query(sx, sz, -1, q);
+            if (q.edge >= 0 && net.eA[q.edge] !== j && net.eB[q.edge] !== j) continue;
+            const py = net.jPlane[j] ? net.planeY(j, sx, sz) : y;
+            const dy = q.y - py;
+            if (Math.abs(dy) > Math.abs(worstH)) worstH = dy;
+        }
+        if (Math.abs(worstH) > 0.12) {
+            this.note('height', x, y, z, net.jEdges[j][0] ?? -1, 'junction J' + j + ' plane height off by ' + worstH.toFixed(2) + ' m', false);
+            return false;
+        }
+        return true;
+    }
+
+    checkSteep(e) {
+        const net = this.net, off = net.eOff[e], n = net.eN[e];
+        let maxGrade = 0, maxAt = -1;
+        for (let k = 1; k < n; k++) {
+            const i = off + k, ds = Math.hypot(net.px[i] - net.px[i - 1], net.pz[i] - net.pz[i - 1]);
+            if (ds >= 0.05) {
+                const gr = Math.abs(net.py[i] - net.py[i - 1]) / ds;
+                if (gr > maxGrade) { maxGrade = gr; maxAt = i; }
+            }
+        }
+        if (maxGrade > 0.30 && maxAt >= 0) {
+            this.note('steep', net.px[maxAt], net.py[maxAt], net.pz[maxAt], e, 'steep grade ' + (maxGrade * 100).toFixed(1) + '% on #' + e, false);
+            return false;
+        }
+        return true;
+    }
+
+    checkOverlap(eA, eB) {
+        const net = this.net, off = net.eOff[eA], n = net.eN[eA];
+        if (n < 2) return true;
+        const ja = net.eA[eA], jb = net.eB[eA];
+        if (net.eA[eB] === ja || net.eA[eB] === jb || net.eB[eB] === ja || net.eB[eB] === jb) return true;
+        const mid = off + (n >> 1), mx = net.px[mid], my = net.py[mid], mz = net.pz[mid];
+        const minClear = net.eHw[eA] + net.eHw[eB] - 0.5;
+        let minDist = 1e9;
+        const ob = net.eOff[eB], on = net.eN[eB];
+        for (let k = 0; k < on; k++) {
+            const d = Math.hypot(net.px[ob + k] - mx, net.pz[ob + k] - mz);
+            if (d < minDist) minDist = d;
+        }
+        if (minDist < minClear) {
+            this.note('overlap', mx, my, mz, eA, 'overlapping carriageways #' + eA + ' & #' + eB + ' (' + minDist.toFixed(2) + 'm < ' + (net.eHw[eA] + net.eHw[eB]).toFixed(2) + 'm)', false);
+            return false;
+        }
+        return true;
+    }
+
+    checkPavement(e) {
+        const net = this.net, off = net.eOff[e], n = net.eN[e], L = net.eLen[e];
+        if (n < 2 || L <= 20) return true;
+        let drops = 0, firstJump = off + (n >> 1), prevPl = net.pl[off], prevPr = net.pr[off];
+        for (let k = 1; k < n; k++) {
+            const i = off + k;
+            if (Math.abs(net.pl[i] - prevPl) > 2.2 || Math.abs(net.pr[i] - prevPr) > 2.2) {
+                if (drops === 0) firstJump = i;
+                drops++;
+            }
+            prevPl = net.pl[i]; prevPr = net.pr[i];
+        }
+        if (drops >= 3) {
+            this.note('pavement', net.px[firstJump], net.py[firstJump], net.pz[firstJump], e, 'fragmented pavement #' + e + ': ' + drops + ' jumps >2.2m', false);
+            return false;
+        }
+        return true;
+    }
+
+    isLocalDetour(j0, j1) {
+        const net = this.net;
+        // True when j0 and j1 are connected within 1-2 non-roundabout local edges (cls >= 2) undirectedly
+        for (const e of net.jEdges[j0]) {
+            const v = net.other(e, j0);
+            if (v === j1 && !net.eRa[e] && net.eCls[e] >= 2) return true;
+            for (const e2 of net.jEdges[v]) {
+                if (net.other(e2, v) === j1 && !net.eRa[e] && !net.eRa[e2] && (net.eCls[e] >= 3 || net.eCls[e2] >= 3)) return true;
+            }
+        }
+        return false;
+    }
+
+    checkDetour(j0, j1) {
+        const net = this.net;
+        const edgeForJ = (j, preferOut) => {
+            for (const e of net.jEdges[j]) {
+                if (preferOut ? net.canLeave(e, j) : (!net.eOne[e] || net.eB[e] === j)) return e;
+            }
+            return -1;
+        };
+        const e0 = edgeForJ(j0, true), e1 = edgeForJ(j1, false);
+        if (e0 < 0 || e1 < 0) return true;
+        const dir0 = net.eA[e0] === j0 ? 1 : -1;
+        const s0 = dir0 > 0 ? Math.min(net.eLen[e0] * 0.25, 4) : Math.max(net.eLen[e0] * 0.75, net.eLen[e0] - 4);
+        const r = net.route(e0, s0, dir0, e1, net.eLen[e1] / 2);
+        const euclid = Math.hypot(net.jx[j1] - net.jx[j0], net.jz[j1] - net.jz[j0]);
+        if (!r || (euclid > 15 && euclid < 120 && r.len > euclid * 10)) {
+            const msg = r
+                ? 'excessive detour J' + j0 + '->J' + j1 + ': ' + Math.round(r.len) + 'm vs ' + Math.round(euclid) + 'm (' + (r.len / euclid).toFixed(1) + 'x)'
+                : 'no route J' + j0 + '->J' + j1;
+            this.note('detour', net.jx[j0], net.jy[j0], net.jz[j0], e0, msg, false);
+            return false;
+        }
+        return true;
+    }
+
     note(kind, x, y, z, edge, detail, quiet) {
         const key = kind + ':' + Math.round(x / SPOT) + ':' + Math.round(z / SPOT);
-        if (this.seen.has(key)) return;
+        if (this.seen.has(key)) return null;
         this.seen.add(key);
         this.net.query(x, z, -1, this.q);
         const car = this.S.me.veh;
@@ -568,10 +721,11 @@ export class RoadBot {
         const f = { id: ++this.n, kind, t: Math.round(this.t * 10) / 10, x: r2(x), y: r2(y), z: r2(z), edge, junc: this.q.junc, d: r2(this.q.d || 0),
             street: edge >= 0 ? this.net.edgeName(edge, 'en') || '' : '', detail, car: [r2(car.px), r2(car.pz)], trail: this.trail.slice(-40) };
         this.found.push(f);
-        if (!quiet || (kind === 'cut' && dist < 80)) this.shots.push(f.id);   // capture only when the spot is actually in view
+        if (!quiet || dist < 80) this.shots.push(f.id);   // capture whenever triggered directly or within view
+        return f;
     }
     // for the tool: everything new since the last call
-    take() { const f = this.found; this.found = []; return { found: f, status: this.status, trips: this.trips, km: Math.round(this.km * 100) / 100, t: Math.round(this.t) }; }
+    take() { const f = this.found; this.found = []; return { found: f, status: this.status, trips: this.trips, km: Math.round(this.km * 100) / 100, t: Math.round(this.t), totalFound: this.n }; }
 }
 function net0(net, x, z, q) { return net.query(x, z, -1, q); }
 const r2 = (v) => Math.round(v * 100) / 100, r3 = (v) => Math.round(v * 1000) / 1000;

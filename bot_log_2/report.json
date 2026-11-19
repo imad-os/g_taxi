@@ -1,0 +1,88 @@
+{
+ "query": "?dev&fresh&proof&bot&level=easy&seed=1&spread=3&kmh=50&steps=6",
+ "minutes": 0.5,
+ "at": "2026-11-19T09:52:42.148Z",
+ "stats": {
+  "trips": 0,
+  "km": 0.16,
+  "t": 34,
+  "status": "trip 1 to Rue 78 (736 m)"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "kind": "grass",
+   "t": 4.4,
+   "x": 6321.97,
+   "y": 30.96,
+   "z": -511.6,
+   "edge": 1675,
+   "junc": 1792,
+   "d": 4.37,
+   "street": "Rue Plage Markala",
+   "detail": "grass drawn 0.02 m over the asphalt (junction 1792)",
+   "car": [
+    6331.16,
+    -513.72
+   ],
+   "trail": [],
+   "shot": "1-grass.jpg"
+  },
+  {
+   "id": 2,
+   "kind": "height",
+   "t": 8,
+   "x": 2300.06,
+   "y": 53.6,
+   "z": -2002.07,
+   "edge": 2447,
+   "junc": 2470,
+   "d": -3.07,
+   "street": "Rue Amerique du Sud",
+   "detail": "drawn road 0.21 m from the driven road",
+   "car": [
+    2292.64,
+    -2005.96
+   ],
+   "trail": [],
+   "shot": "2-height.jpg"
+  },
+  {
+   "id": 4,
+   "kind": "height",
+   "t": 10.8,
+   "x": -231.7,
+   "y": 42.81,
+   "z": 2099.17,
+   "edge": 3227,
+   "junc": -1,
+   "d": 2.12,
+   "street": "Avenue des Forces Armées Royales",
+   "detail": "drawn road -0.63 m from the driven road",
+   "car": [
+    -229.17,
+    2091.58
+   ],
+   "trail": [],
+   "shot": "4-height.jpg"
+  },
+  {
+   "id": 3,
+   "kind": "kink",
+   "t": 8,
+   "x": 2828.04,
+   "y": 15.84,
+   "z": -2237.5,
+   "edge": 1858,
+   "junc": -1,
+   "d": 0,
+   "street": "Rue Portugal",
+   "detail": "street turns 80° within 10 m at s=307",
+   "car": [
+    2292.64,
+    -2005.96
+   ],
+   "trail": []
+  }
+ ]
+}

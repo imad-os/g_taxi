@@ -4,16 +4,27 @@ import { VERSION } from './version.js';
 
 export const Models = { index: null, buf: null, geo: {} };
 
+const _wait = (ms) => new Promise(r => setTimeout(r, ms));
+async function _fetchRetry(url) {
+    for (let attempt = 0; ; attempt++) {
+        const r = await fetch(url);
+        if (r.ok || (r.status !== 429 && r.status < 500) || attempt >= 6) return r;
+        const ra = Number(r.headers.get('retry-after'));
+        const delay = (Number.isFinite(ra) && ra > 0 ? ra * 1000 : 350 * (2 ** attempt)) + Math.random() * 250;
+        await _wait(Math.min(delay, 8000));
+    }
+}
+
 export async function loadModels(onProgress) {
-    const [idx, bin] = await Promise.all([
-        fetch('assets/models.json?v=' + VERSION).then(r => r.json()),
-        fetchBin('assets/models.bin?v=' + VERSION, onProgress)
-    ]);
+    const idxRes = await _fetchRetry('assets/models.json?v=' + VERSION);
+    if (!idxRes.ok) throw new Error('models.json ' + idxRes.status);
+    const idx = await idxRes.json();
+    const bin = await fetchBin('assets/models.bin?v=' + VERSION, onProgress);
     Models.index = idx; Models.buf = bin;
 }
 
 export async function fetchBin(url, onProgress) {
-    const r = await fetch(url);
+    const r = await _fetchRetry(url);
     if (!r.ok) throw new Error(url + ' ' + r.status);
     if (!onProgress || !r.body || !r.headers.get('content-length')) return r.arrayBuffer();
     // content-length is the size on the wire: a server that compresses the file (gzip) sends MORE bytes

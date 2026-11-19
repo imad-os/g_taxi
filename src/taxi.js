@@ -6,7 +6,7 @@
 export const FUEL_PRICE = 13.4;      // DH per litre (diesel at the pump, 2026)
 const TANK = 40;                     // litres
 export const ORANGE = 10;            // the orange level: warnings below this many litres (red below 4)
-const BURN = 4;                      // game time runs faster than a real shift: fuel burns 4x (a tank lasts ~3 h of play)
+const BURN = 1;                      // realistic fuel consumption: 6 L/100 km in city, 5 L/100 km outside
 export const FARE = { flag: 14, km: 8 };   // DH: pick-up + per km on the meter (owner 2026-11-15: twice 0.4's 7 + 4)
 // fines (DH), code de la route (loi 52-05): classes 700 / 500 / 300; speeding by how far over the limit
 export const FINES = { red: 700, wrong: 700, pave: 500, fault: 300 };
@@ -73,7 +73,7 @@ export class Taxi {
         const dist = speed * dt;
         this.stats.km += dist / 1000;
         if (this.ride && this.ride.ped.state === 'in') { this.ride.km += dist / 1000; this.ride.t += dt; }
-        this.fuelTick(dt, v);
+        this.fuelTick(dt, v, q);
         // speed limiter
         v.topSpeedCap = this.limiter ? this.limiter / 3.6 : 1e9;
         // which way along the street, the junction ahead
@@ -135,8 +135,8 @@ export class Taxi {
         else if (!this.ride && speed < 1.6 && this.nearPed(v)) { this.prompt = 'pickup'; this.quote(v, q, this.nearPed(v)); }
     }
 
-    // fuel: litres per hour = idle 0.7 + 0.26 per kW the engine gives (a diesel's brake specific consumption)
-    fuelTick(dt, v) {
+    // fuel: 6 L/100 km in city, 5 L/100 km outside (plus ~0.65 L/h idle when stopped)
+    fuelTick(dt, v, q) {
         if (this.helpT > 0) {
             this.helpT -= dt;
             if (this.helpT <= 0) {
@@ -153,10 +153,14 @@ export class Taxi {
             return;
         }
         if (v.fuelCut || v.stalled) return;
-        const thr = v.input.throttle, rpm = Math.max(v.rpm, 800);
-        const kw = Math.max(0, v.engineTorque(rpm) * thr * rpm * Math.PI / 30 / 1000);
-        const lph = 0.7 + 0.26 * kw;
-        this.fuel -= lph / 3600 * dt * BURN;
+        const speed = Math.abs(v.fwdSpeed);
+        const outside = q && q.edge >= 0 && (this.net.eCls[q.edge] === 0 || q.lim >= 70);
+        const per100Km = outside ? 5.0 : 6.0;
+        const thr = Math.max(0, Math.min(1, v.input.throttle || 0));
+        const load = 0.88 + 0.24 * thr;
+        const distFuel = (speed * dt / 1000) * (per100Km / 100) * load;
+        const idleFuel = (0.65 / 3600) * dt * Math.max(0, 1 - speed / 5.5);
+        this.fuel -= (distFuel + idleFuel) * BURN;
         if (this.fuel <= 0) { this.fuel = 0; v.fuelCut = true; this.toast('outOfFuel', 'bad'); this.dirty = true; }
         // orange (< 10 L, a quarter of the tank): a warning now and every 45 s until fuelled (or following the arrows); red below 4 L
         if (this.fuel < ORANGE) {

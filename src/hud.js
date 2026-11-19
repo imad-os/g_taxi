@@ -157,18 +157,21 @@ export class Hud {
             x.stroke();
             x.fillStyle = '#2cff8f'; x.beginPath(); x.arc(dx, dz, 5 / k, 0, 7); x.fill();
         }
-        // people waiting, stations
-        x.fillStyle = '#ffd400';
-        for (const p of T.peds) if (p.state === 'wait') { x.beginPath(); x.arc((p.x - v.px) / MPP, (p.z - v.pz) / MPP, 3.6 / k, 0, 7); x.fill(); }
+        // people waiting (green dots), enforcement, fuel stations (red dots)
+        x.fillStyle = '#22e568';
+        for (const p of T.peds) if (p.state === 'wait') { x.beginPath(); x.arc((p.x - v.px) / MPP, (p.z - v.pz) / MPP, 3.8 / k, 0, 7); x.fill(); }
         const enf = S.enforce;
         if (enf) {
-            x.fillStyle = '#ff4b3e';
+            x.fillStyle = '#ff9f1a';
             for (const c of enf.cams) { const X = (c.x - v.px) / MPP, Z = (c.z - v.pz) / MPP; if (X * X + Z * Z < 12000) { x.beginPath(); x.arc(X, Z, 3.4 / k, 0, 7); x.fill(); } }
             x.fillStyle = '#3d7bff';
             for (const c of enf.police) { const X = (c.x - v.px) / MPP, Z = (c.z - v.pz) / MPP; if (X * X + Z * Z < 12000) { x.beginPath(); x.arc(X, Z, 3.8 / k, 0, 7); x.fill(); } }
         }
-        x.fillStyle = '#19d17a';
-        for (const s of net.stations) { const i = net.eOff[s.e] + s.k; x.fillRect((net.px[i] - v.px) / MPP - 4 / k, (net.pz[i] - v.pz) / MPP - 4 / k, 8 / k, 8 / k); }
+        x.fillStyle = '#ff3b30';
+        for (const s of net.stations) {
+            const i = net.eOff[s.e] + s.k;
+            x.beginPath(); x.arc((net.px[i] - v.px) / MPP, (net.pz[i] - v.pz) / MPP, 4.5 / k, 0, 7); x.fill();
+        }
         x.restore();
         // the taxi: an arrow in the middle
         x.fillStyle = '#21c8ef'; x.strokeStyle = '#fff'; x.lineWidth = 1.5;

@@ -1,0 +1,5963 @@
+{
+ "fixedAt": "2026-11-19T10:27:05.372Z",
+ "version": "0.6.8",
+ "summary": {
+  "verifiedDriveSpotsTotal": 100,
+  "verifiedDriveSpotsResolved": 100,
+  "beforePatrol": {
+   "patrolledAt": "2026-11-19T10:17:22.935Z",
+   "totalNodes": 4021,
+   "nodesPatrolled": 4021,
+   "totalEdges": 5676,
+   "totalSamples": 114099,
+   "hubJunction": 1424,
+   "routesTested": 3966,
+   "routesSucceeded": 3926,
+   "routesFailed": 40,
+   "totalRouteKm": 1221.68,
+   "totalPathfindingErrors": 917,
+   "totalCoordinateAnomalies": 1400,
+   "pathfindingErrorCounts": {
+    "dead_end_node": 402,
+    "oneway_source_node": 2,
+    "oneway_sink_node": 1,
+    "unreachable_from_hub": 39,
+    "oneway_trap_no_return": 37,
+    "excessive_detour": 342,
+    "route_failed": 40,
+    "route_no_legal_exit_or_entry": 54
+   },
+   "coordinateAnomalyCounts": {
+    "acute_multi_junction": 55,
+    "overlapping_junction_plazas": 749,
+    "overlapping_carriageways": 108,
+    "fragmented_pavement": 200,
+    "ground_over_road": 205,
+    "degenerate_edge": 73,
+    "steep_grade": 8,
+    "kink": 2
+   }
+  },
+  "afterPatrol": {
+   "patrolledAt": "2026-11-19T10:25:25.540Z",
+   "totalNodes": 3985,
+   "nodesPatrolled": 3985,
+   "totalEdges": 5575,
+   "totalSamples": 113835,
+   "hubJunction": 1423,
+   "routesTested": 3984,
+   "routesSucceeded": 3984,
+   "routesFailed": 0,
+   "totalRouteKm": 1284.88,
+   "totalPathfindingErrors": 772,
+   "totalCoordinateAnomalies": 1002,
+   "pathfindingErrorCounts": {
+    "dead_end_node": 406,
+    "excessive_detour": 366
+   },
+   "coordinateAnomalyCounts": {
+    "acute_multi_junction": 2,
+    "junction_height_mismatch": 3,
+    "overlapping_junction_plazas": 663,
+    "fragmented_pavement": 321,
+    "steep_grade": 2,
+    "overlapping_carriageways": 10,
+    "kink": 1
+   }
+  },
+  "cityDataRepairs": {
+   "degenerateEdgesRemoved": 101,
+   "microEdgesContracted": 36,
+   "duplicateSamplesRemoved": 0,
+   "onewayFixedForConnectivity": 74,
+   "kinksSmoothed": 13,
+   "steepGradesSmoothed": 10,
+   "overlappingCarriagewaysTrimmed": 142,
+   "groundCellsLowered": 90225
+  }
+ },
+ "codeFixes": [
+  {
+   "file": "src/net.js",
+   "description": "Compute true clamped segment Euclidean distance for asphalt edge/off classification so points past dead-end tips are not misclassified as asphalt; allow overlap height blending across non-plane junctions."
+  },
+  {
+   "file": "src/city.js",
+   "description": "Clamp terrain vertices near roads below q.y - 0.40 m; remove q.junc < 0 guard on asphalt vertices; sink kerb/pavement/verge vertices overlapping another street or 3+ junction; add plain-asphalt cap discs at sharp 2-edge bends."
+  },
+  {
+   "file": "src/roadbot.js",
+   "description": "Check surface rays at 0..16 m ahead every 0.4 s, detect dirt cliff overhangs, track full session driven coordinates for map plotting, and capture screenshots within view."
+  },
+  {
+   "file": "tools/roadbot.mjs",
+   "description": "Fix hotspot patrol capping, add --max-issues stop threshold, wait per-frame for clean screenshot capture, and export driven session path to plotFindings."
+  },
+  {
+   "file": "tools/roadbot-map.mjs",
+   "description": "Always render map.png in dark mode with grey road network routes and light-blue session driven routes."
+  },
+  {
+   "file": "tools/fix-city.mjs",
+   "description": "Remove 73 degenerate/micro-edges, repair all directed one-way traps/sinks/sources for 100% hub connectivity, smooth kinks & steep grades, trim overlapping dual carriageways, rebuild side.bin clearances, and carve ground.bin below road & junction heights."
+  }
+ ],
+ "verifiedSpots": [
+  {
+   "id": 1,
+   "kind": "height",
+   "street": "Boulevard Mohamed V",
+   "edgeBefore": 5513,
+   "edgeAfter": 5418,
+   "junc": 1967,
+   "x": 2504.02,
+   "z": -1771.46,
+   "beforeDetail": "drawn road 0.21 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/1-height.jpg",
+   "afterShot": "shots_fix/1-height.jpg"
+  },
+  {
+   "id": 2,
+   "kind": "cut",
+   "street": "Boulevard Pasteur",
+   "edgeBefore": 1283,
+   "edgeAfter": 5419,
+   "junc": 1967,
+   "x": 2497.46,
+   "z": -1775.79,
+   "beforeDetail": "route_failed from #1283 to #1860",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/2-cut.jpg",
+   "afterShot": "shots_fix/2-cut.jpg"
+  },
+  {
+   "id": 3,
+   "kind": "height",
+   "street": "Boulevard Pasteur",
+   "edgeBefore": 5516,
+   "edgeAfter": 5476,
+   "junc": 3994,
+   "x": 2532.67,
+   "z": -1759.63,
+   "beforeDetail": "drawn road -0.16 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/3-height.jpg",
+   "afterShot": "shots_fix/3-height.jpg"
+  },
+  {
+   "id": 4,
+   "kind": "height",
+   "street": "Avenue Belgique",
+   "edgeBefore": 2535,
+   "edgeAfter": 4344,
+   "junc": 101,
+   "x": 2213.85,
+   "z": -1751.29,
+   "beforeDetail": "drawn road 0.21 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/4-height.jpg",
+   "afterShot": "shots_fix/4-height.jpg"
+  },
+  {
+   "id": 5,
+   "kind": "height",
+   "street": "Avenue Belgique",
+   "edgeBefore": 2535,
+   "edgeAfter": 2506,
+   "junc": 101,
+   "x": 2213.01,
+   "z": -1749.98,
+   "beforeDetail": "drawn road 0.26 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/5-height.jpg",
+   "afterShot": "shots_fix/5-height.jpg"
+  },
+  {
+   "id": 6,
+   "kind": "cut",
+   "street": "Avenue Msallah",
+   "edgeBefore": 5585,
+   "edgeAfter": 5487,
+   "junc": -1,
+   "x": 2182.87,
+   "z": -1603.06,
+   "beforeDetail": "no route from #5585 to #3305 (Boulevard Moulay Rachid)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/6-cut.jpg",
+   "afterShot": "shots_fix/6-cut.jpg"
+  },
+  {
+   "id": 7,
+   "kind": "grass",
+   "street": "Avenue Moussa Bnou Noussair",
+   "edgeBefore": 5572,
+   "edgeAfter": 5474,
+   "junc": 4001,
+   "x": 2703.04,
+   "z": -1560.18,
+   "beforeDetail": "grass drawn 0.05 m over the asphalt (junction 4001)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/7-grass.jpg",
+   "afterShot": "shots_fix/7-grass.jpg"
+  },
+  {
+   "id": 8,
+   "kind": "grass",
+   "street": "Avenue Moussa Bnou Noussair",
+   "edgeBefore": 5573,
+   "edgeAfter": 5475,
+   "junc": -1,
+   "x": 2686.13,
+   "z": -1563.89,
+   "beforeDetail": "grass drawn 0.03 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/8-grass.jpg",
+   "afterShot": "shots_fix/8-grass.jpg"
+  },
+  {
+   "id": 9,
+   "kind": "cut",
+   "street": "Avenue Moussa Bnou Noussair",
+   "edgeBefore": 5573,
+   "edgeAfter": 5475,
+   "junc": 4001,
+   "x": 2702.27,
+   "z": -1564.51,
+   "beforeDetail": "route_failed from #5573 to #13",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/9-cut.jpg",
+   "afterShot": "shots_fix/9-cut.jpg"
+  },
+  {
+   "id": 10,
+   "kind": "grass",
+   "street": "Rue Zerktouni",
+   "edgeBefore": 14,
+   "edgeAfter": 14,
+   "junc": 21,
+   "x": 2780.04,
+   "z": -1537.93,
+   "beforeDetail": "grass drawn 0.14 m over the asphalt (junction 21)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/10-grass.jpg",
+   "afterShot": "shots_fix/10-grass.jpg"
+  },
+  {
+   "id": 11,
+   "kind": "height",
+   "street": "Boulevard Mohamed V",
+   "edgeBefore": 5056,
+   "edgeAfter": 4965,
+   "junc": 1314,
+   "x": 2838.79,
+   "z": -1624.49,
+   "beforeDetail": "drawn road 0.28 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/11-height.jpg",
+   "afterShot": "shots_fix/11-height.jpg"
+  },
+  {
+   "id": 12,
+   "kind": "height",
+   "street": "Boulevard Mohamed V",
+   "edgeBefore": 5057,
+   "edgeAfter": 1193,
+   "junc": 1314,
+   "x": 2833.87,
+   "z": -1631.17,
+   "beforeDetail": "drawn road 0.33 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/12-height.jpg",
+   "afterShot": "shots_fix/12-height.jpg"
+  },
+  {
+   "id": 13,
+   "kind": "cut",
+   "street": "Rue Jabha Al Wataniya",
+   "edgeBefore": 1197,
+   "edgeAfter": 1193,
+   "junc": 1314,
+   "x": 2839.41,
+   "z": -1629.01,
+   "beforeDetail": "route_failed from #1197 to #5055",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/13-cut.jpg",
+   "afterShot": "shots_fix/13-cut.jpg"
+  },
+  {
+   "id": 14,
+   "kind": "grass",
+   "street": "Rue Ibn Joubair",
+   "edgeBefore": 2177,
+   "edgeAfter": 2157,
+   "junc": -1,
+   "x": 2842.28,
+   "z": -1638.71,
+   "beforeDetail": "grass drawn 0.02 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/14-grass.jpg",
+   "afterShot": "shots_fix/14-grass.jpg"
+  },
+  {
+   "id": 15,
+   "kind": "cut",
+   "street": "Rue Ibn Joubair",
+   "edgeBefore": 2177,
+   "edgeAfter": 2157,
+   "junc": -1,
+   "x": 2920.01,
+   "z": -1694.17,
+   "beforeDetail": "no route from #2177 to #20 (Rue Omar Bnou Abdelaziz)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/15-cut.jpg",
+   "afterShot": "shots_fix/15-cut.jpg"
+  },
+  {
+   "id": 16,
+   "kind": "cut",
+   "street": "Rue Ibn Joubair",
+   "edgeBefore": 2177,
+   "edgeAfter": 2157,
+   "junc": -1,
+   "x": 2933.66,
+   "z": -1702.65,
+   "beforeDetail": "no route from #2177 to #2896 (Rue Akhansae)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/16-cut.jpg",
+   "afterShot": "shots_fix/16-cut.jpg"
+  },
+  {
+   "id": 17,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 4676,
+   "edgeAfter": 4597,
+   "junc": -1,
+   "x": 3164.13,
+   "z": -1718.96,
+   "beforeDetail": "grass drawn 0.08 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/17-grass.jpg",
+   "afterShot": "shots_fix/17-grass.jpg"
+  },
+  {
+   "id": 18,
+   "kind": "bump",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 1261,
+   "edgeAfter": 1256,
+   "junc": -1,
+   "x": 3158.46,
+   "z": -1717.25,
+   "beforeDetail": "suspension 0.33 m, vertical -0.4 m/s",
+   "fixApplied": "Smoothed elevation spikes, capped deg=2 bends, and lowered overlapping pavements/ground in tools/fix-city.mjs & src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/18-bump.jpg",
+   "afterShot": "shots_fix/18-bump.jpg"
+  },
+  {
+   "id": 19,
+   "kind": "grass",
+   "street": "Rue Al Farabi",
+   "edgeBefore": 298,
+   "edgeAfter": 297,
+   "junc": 334,
+   "x": 3111.94,
+   "z": -1655.41,
+   "beforeDetail": "grass drawn 0.09 m over the asphalt (junction 334)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/19-grass.jpg",
+   "afterShot": "shots_fix/19-grass.jpg"
+  },
+  {
+   "id": 20,
+   "kind": "grass",
+   "street": "Rue Al Farabi",
+   "edgeBefore": 298,
+   "edgeAfter": 297,
+   "junc": -1,
+   "x": 3116.35,
+   "z": -1647.42,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/20-grass.jpg",
+   "afterShot": "shots_fix/20-grass.jpg"
+  },
+  {
+   "id": 21,
+   "kind": "bump",
+   "street": "Rue Antaki",
+   "edgeBefore": 293,
+   "edgeAfter": 292,
+   "junc": 334,
+   "x": 3107.44,
+   "z": -1655.6,
+   "beforeDetail": "suspension 0.32 m, vertical -0.4 m/s",
+   "fixApplied": "Smoothed elevation spikes, capped deg=2 bends, and lowered overlapping pavements/ground in tools/fix-city.mjs & src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/21-bump.jpg",
+   "afterShot": "shots_fix/21-bump.jpg"
+  },
+  {
+   "id": 22,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 1262,
+   "edgeAfter": 1257,
+   "junc": -1,
+   "x": 3282.27,
+   "z": -1644.48,
+   "beforeDetail": "grass drawn 0.18 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/22-grass.jpg",
+   "afterShot": "shots_fix/22-grass.jpg"
+  },
+  {
+   "id": 23,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 4674,
+   "edgeAfter": 4595,
+   "junc": 1380,
+   "x": 3356.39,
+   "z": -1593.6,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt (junction 1380)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/23-grass.jpg",
+   "afterShot": "shots_fix/23-grass.jpg"
+  },
+  {
+   "id": 24,
+   "kind": "height",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 5662,
+   "edgeAfter": 5561,
+   "junc": -1,
+   "x": 3383.22,
+   "z": -1575.26,
+   "beforeDetail": "drawn road 0.16 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/24-height.jpg",
+   "afterShot": "shots_fix/24-height.jpg"
+  },
+  {
+   "id": 25,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 437,
+   "edgeAfter": 435,
+   "junc": -1,
+   "x": 3405.24,
+   "z": -1572.4,
+   "beforeDetail": "grass drawn 0.39 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/25-grass.jpg",
+   "afterShot": "shots_fix/25-grass.jpg"
+  },
+  {
+   "id": 26,
+   "kind": "kink",
+   "street": "Rue Portugal",
+   "edgeBefore": 1858,
+   "edgeAfter": -1,
+   "junc": -1,
+   "x": 2828.04,
+   "z": -2237.5,
+   "beforeDetail": "street turns 80° within 10 m at s=307",
+   "fixApplied": "Smoothed sharp corner geometry along edge polyline in tools/fix-city.mjs",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": null,
+   "afterShot": "shots_fix/26-kink.jpg"
+  },
+  {
+   "id": 27,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 437,
+   "edgeAfter": 435,
+   "junc": -1,
+   "x": 3503.91,
+   "z": -1513.3,
+   "beforeDetail": "grass drawn 0.09 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/27-grass.jpg",
+   "afterShot": "shots_fix/27-grass.jpg"
+  },
+  {
+   "id": 28,
+   "kind": "cut",
+   "street": "Avenue Ludwig Van Beethoven",
+   "edgeBefore": 2503,
+   "edgeAfter": 4659,
+   "junc": 2519,
+   "x": 3381.67,
+   "z": -736.11,
+   "beforeDetail": "route_failed from #2503 to #1032",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/28-cut.jpg",
+   "afterShot": "shots_fix/28-cut.jpg"
+  },
+  {
+   "id": 29,
+   "kind": "cut",
+   "street": "Avenue Ludwig Van Beethoven",
+   "edgeBefore": 2503,
+   "edgeAfter": 2474,
+   "junc": -1,
+   "x": 3320.63,
+   "z": -604.53,
+   "beforeDetail": "no route from #2503 to #1180 (Rue Liban)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/29-cut.jpg",
+   "afterShot": "shots_fix/29-cut.jpg"
+  },
+  {
+   "id": 30,
+   "kind": "grass",
+   "street": "Rue 18",
+   "edgeBefore": 330,
+   "edgeAfter": 329,
+   "junc": -1,
+   "x": 2223.58,
+   "z": 713.73,
+   "beforeDetail": "grass drawn 0.00 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/30-grass.jpg",
+   "afterShot": "shots_fix/30-grass.jpg"
+  },
+  {
+   "id": 31,
+   "kind": "grass",
+   "street": "",
+   "edgeBefore": 1032,
+   "edgeAfter": 1028,
+   "junc": 1134,
+   "x": 3328.02,
+   "z": -581.18,
+   "beforeDetail": "grass drawn 0.00 m over the asphalt (junction 1134)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/31-grass.jpg",
+   "afterShot": "shots_fix/31-grass.jpg"
+  },
+  {
+   "id": 32,
+   "kind": "cut",
+   "street": "Avenue Moulay Ismail",
+   "edgeBefore": 2504,
+   "edgeAfter": 2475,
+   "junc": -1,
+   "x": 3247.21,
+   "z": -497.72,
+   "beforeDetail": "no route from #2504 to #126 (Rue Santander)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/32-cut.jpg",
+   "afterShot": "shots_fix/32-cut.jpg"
+  },
+  {
+   "id": 33,
+   "kind": "height",
+   "street": "Avenue Moulay Ismail",
+   "edgeBefore": 2504,
+   "edgeAfter": 2475,
+   "junc": 2521,
+   "x": 3123.54,
+   "z": -408.15,
+   "beforeDetail": "drawn road 0.32 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/33-height.jpg",
+   "afterShot": "shots_fix/33-height.jpg"
+  },
+  {
+   "id": 34,
+   "kind": "cut",
+   "street": "Avenue Moulay Ismail",
+   "edgeBefore": 2504,
+   "edgeAfter": 3162,
+   "junc": 2521,
+   "x": 3126.33,
+   "z": -404.75,
+   "beforeDetail": "route_failed from #2504 to #102",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/34-cut.jpg",
+   "afterShot": "shots_fix/34-cut.jpg"
+  },
+  {
+   "id": 35,
+   "kind": "height",
+   "street": "Avenue Moulay Ismail",
+   "edgeBefore": 2504,
+   "edgeAfter": 2475,
+   "junc": 2521,
+   "x": 3126.89,
+   "z": -410.61,
+   "beforeDetail": "drawn road 0.36 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/35-height.jpg",
+   "afterShot": "shots_fix/35-height.jpg"
+  },
+  {
+   "id": 36,
+   "kind": "cut",
+   "street": "Rue des Acacias",
+   "edgeBefore": 102,
+   "edgeAfter": 4662,
+   "junc": 132,
+   "x": 3111.9,
+   "z": -412.53,
+   "beforeDetail": "route_failed from #102 to #2898",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/36-cut.jpg",
+   "afterShot": "shots_fix/36-cut.jpg"
+  },
+  {
+   "id": 37,
+   "kind": "cut",
+   "street": "Rue Bataille Sidi Othman",
+   "edgeBefore": 158,
+   "edgeAfter": 157,
+   "junc": 188,
+   "x": 3462.87,
+   "z": -273.54,
+   "beforeDetail": "route_failed from #158 to #156",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/37-cut.jpg",
+   "afterShot": "shots_fix/37-cut.jpg"
+  },
+  {
+   "id": 38,
+   "kind": "grass",
+   "street": "Rue B",
+   "edgeBefore": 202,
+   "edgeAfter": 202,
+   "junc": -1,
+   "x": 3772.05,
+   "z": 383.36,
+   "beforeDetail": "grass drawn 0.09 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/38-grass.jpg",
+   "afterShot": "shots_fix/38-grass.jpg"
+  },
+  {
+   "id": 39,
+   "kind": "grass",
+   "street": "Rue B",
+   "edgeBefore": 202,
+   "edgeAfter": 202,
+   "junc": -1,
+   "x": 3769.94,
+   "z": 383.99,
+   "beforeDetail": "grass drawn 0.11 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/39-grass.jpg",
+   "afterShot": "shots_fix/39-grass.jpg"
+  },
+  {
+   "id": 40,
+   "kind": "grass",
+   "street": "Avenue R'gaia",
+   "edgeBefore": 1388,
+   "edgeAfter": 1383,
+   "junc": -1,
+   "x": 3985.8,
+   "z": 572.26,
+   "beforeDetail": "grass drawn 0.05 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/40-grass.jpg",
+   "afterShot": "shots_fix/40-grass.jpg"
+  },
+  {
+   "id": 41,
+   "kind": "grass",
+   "street": "Avenue R'gaia",
+   "edgeBefore": 1388,
+   "edgeAfter": 1383,
+   "junc": -1,
+   "x": 3986.34,
+   "z": 568.29,
+   "beforeDetail": "grass drawn 0.01 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/41-grass.jpg",
+   "afterShot": "shots_fix/41-grass.jpg"
+  },
+  {
+   "id": 42,
+   "kind": "cut",
+   "street": "Rue Echahid Errachid Med",
+   "edgeBefore": 890,
+   "edgeAfter": 886,
+   "junc": 1000,
+   "x": 3987.99,
+   "z": 1338.79,
+   "beforeDetail": "route_failed from #890 to #879",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/42-cut.jpg",
+   "afterShot": "shots_fix/42-cut.jpg"
+  },
+  {
+   "id": 43,
+   "kind": "grass",
+   "street": "Boulevard Fatima Zahra",
+   "edgeBefore": 3096,
+   "edgeAfter": 3063,
+   "junc": 1113,
+   "x": 3422.66,
+   "z": 1167.5,
+   "beforeDetail": "grass drawn 0.07 m over the asphalt (junction 1113)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/43-grass.jpg",
+   "afterShot": "shots_fix/43-grass.jpg"
+  },
+  {
+   "id": 44,
+   "kind": "grass",
+   "street": "Rue Massoudi",
+   "edgeBefore": 1012,
+   "edgeAfter": 1008,
+   "junc": -1,
+   "x": 3430.66,
+   "z": 1160.9,
+   "beforeDetail": "grass drawn 0.20 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/44-grass.jpg",
+   "afterShot": "shots_fix/44-grass.jpg"
+  },
+  {
+   "id": 45,
+   "kind": "grass",
+   "street": "Avenue Abdelkhalek Torres",
+   "edgeBefore": 265,
+   "edgeAfter": 264,
+   "junc": -1,
+   "x": 3121.27,
+   "z": 1142.48,
+   "beforeDetail": "grass drawn 0.10 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/45-grass.jpg",
+   "afterShot": "shots_fix/45-grass.jpg"
+  },
+  {
+   "id": 46,
+   "kind": "grass",
+   "street": "Avenue Abdelkhalek Torres",
+   "edgeBefore": 252,
+   "edgeAfter": 251,
+   "junc": -1,
+   "x": 3132.88,
+   "z": 839.56,
+   "beforeDetail": "grass drawn 0.09 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/46-grass.jpg",
+   "afterShot": "shots_fix/46-grass.jpg"
+  },
+  {
+   "id": 47,
+   "kind": "height",
+   "street": "Rue 25",
+   "edgeBefore": 3922,
+   "edgeAfter": 3883,
+   "junc": 3377,
+   "x": 3359.61,
+   "z": 515.47,
+   "beforeDetail": "drawn road 0.16 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/47-height.jpg",
+   "afterShot": "shots_fix/47-height.jpg"
+  },
+  {
+   "id": 48,
+   "kind": "kink",
+   "street": "Place Volubilis",
+   "edgeBefore": 3253,
+   "edgeAfter": 3218,
+   "junc": 2986,
+   "x": 2757.74,
+   "z": -106.79,
+   "beforeDetail": "street turns 94° within 10 m at s=5",
+   "fixApplied": "Smoothed sharp corner geometry along edge polyline in tools/fix-city.mjs",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/48-kink.jpg",
+   "afterShot": "shots_fix/48-kink.jpg"
+  },
+  {
+   "id": 49,
+   "kind": "cut",
+   "street": "Avenue Moulay Ismail",
+   "edgeBefore": 2950,
+   "edgeAfter": 2921,
+   "junc": -1,
+   "x": 2462.81,
+   "z": 41.41,
+   "beforeDetail": "no route from #2950 to #2719 (Avenue Moulay Abdelaziz)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/49-cut.jpg",
+   "afterShot": "shots_fix/49-cut.jpg"
+  },
+  {
+   "id": 50,
+   "kind": "height",
+   "street": "Avenue des Forces Armées Royales",
+   "edgeBefore": 4695,
+   "edgeAfter": 4616,
+   "junc": 3757,
+   "x": 2388.66,
+   "z": 57.91,
+   "beforeDetail": "drawn road -0.20 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/50-height.jpg",
+   "afterShot": "shots_fix/50-height.jpg"
+  },
+  {
+   "id": 51,
+   "kind": "cut",
+   "street": "Avenue des Forces Armées Royales",
+   "edgeBefore": 2490,
+   "edgeAfter": 2461,
+   "junc": -1,
+   "x": 2382.36,
+   "z": 69.91,
+   "beforeDetail": "no route from #2490 to #4969 (Rue Bataille Isly)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/51-cut.jpg",
+   "afterShot": "shots_fix/51-cut.jpg"
+  },
+  {
+   "id": 52,
+   "kind": "cut",
+   "street": "Rue Akhansae",
+   "edgeBefore": 2896,
+   "edgeAfter": 2867,
+   "junc": -1,
+   "x": 2180.4,
+   "z": -566.83,
+   "beforeDetail": "no route from #2896 to #1558 (Rue Ibn Al Haytam)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/52-cut.jpg",
+   "afterShot": "shots_fix/52-cut.jpg"
+  },
+  {
+   "id": 53,
+   "kind": "grass",
+   "street": "Rue Ghazwat Al Khandak",
+   "edgeBefore": 217,
+   "edgeAfter": 216,
+   "junc": -1,
+   "x": 3468.91,
+   "z": 196.78,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/53-grass.jpg",
+   "afterShot": "shots_fix/53-grass.jpg"
+  },
+  {
+   "id": 54,
+   "kind": "cut",
+   "street": "Rue Akhansae",
+   "edgeBefore": 340,
+   "edgeAfter": 338,
+   "junc": 389,
+   "x": 2114,
+   "z": -550.42,
+   "beforeDetail": "no route from #340 to #50 (Rue Ibn Toumarte)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/54-cut.jpg",
+   "afterShot": "shots_fix/54-cut.jpg"
+  },
+  {
+   "id": 55,
+   "kind": "cut",
+   "street": "Rue Oued Aliane",
+   "edgeBefore": 1773,
+   "edgeAfter": 1764,
+   "junc": -1,
+   "x": 2183.08,
+   "z": -787.43,
+   "beforeDetail": "no route from #1773 to #4450 (Casa Blanca)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/55-cut.jpg",
+   "afterShot": "shots_fix/55-cut.jpg"
+  },
+  {
+   "id": 56,
+   "kind": "cut",
+   "street": "Avenue Sidi Mohamed Ben Abdellah",
+   "edgeBefore": 4718,
+   "edgeAfter": 1751,
+   "junc": 1892,
+   "x": 2163.62,
+   "z": -888.45,
+   "beforeDetail": "route_failed from #4718 to #4719",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/56-cut.jpg",
+   "afterShot": "shots_fix/56-cut.jpg"
+  },
+  {
+   "id": 57,
+   "kind": "cut",
+   "street": "Rue Jabha Al Wataniya",
+   "edgeBefore": 1197,
+   "edgeAfter": 1193,
+   "junc": -1,
+   "x": 2735.5,
+   "z": -1813.55,
+   "beforeDetail": "no route from #1197 to #1302 (Rue d'Angleterre)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/57-cut.jpg",
+   "afterShot": "shots_fix/57-cut.jpg"
+  },
+  {
+   "id": 58,
+   "kind": "height",
+   "street": "Rue Amerique du Sud",
+   "edgeBefore": 2447,
+   "edgeAfter": 2418,
+   "junc": 2470,
+   "x": 2299.85,
+   "z": -2001.86,
+   "beforeDetail": "drawn road 0.21 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/58-height.jpg",
+   "afterShot": "shots_fix/58-height.jpg"
+  },
+  {
+   "id": 59,
+   "kind": "cut",
+   "street": "Place du 9 Avril",
+   "edgeBefore": 1286,
+   "edgeAfter": 1281,
+   "junc": 1404,
+   "x": 2481.22,
+   "z": -2149.4,
+   "beforeDetail": "no route from #1286 to #3340 (#3340)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/59-cut.jpg",
+   "afterShot": "shots_fix/59-cut.jpg"
+  },
+  {
+   "id": 60,
+   "kind": "cut",
+   "street": "Rue Portugal",
+   "edgeBefore": 1858,
+   "edgeAfter": -1,
+   "junc": -1,
+   "x": 2824.38,
+   "z": -2230.4,
+   "beforeDetail": "no route from #1858 to #5145 (Rue Rossini)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/60-cut.jpg",
+   "afterShot": "shots_fix/60-cut.jpg"
+  },
+  {
+   "id": 61,
+   "kind": "cut",
+   "street": "Rue Portugal",
+   "edgeBefore": 1858,
+   "edgeAfter": 1849,
+   "junc": -1,
+   "x": 2838.43,
+   "z": -2166.01,
+   "beforeDetail": "no route from #1858 to #2972 (Rue du Mexique)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/61-cut.jpg",
+   "afterShot": "shots_fix/61-cut.jpg"
+  },
+  {
+   "id": 62,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 1268,
+   "edgeAfter": 1263,
+   "junc": -1,
+   "x": 2881.97,
+   "z": -2396.14,
+   "beforeDetail": "grass drawn 0.05 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/62-grass.jpg",
+   "afterShot": "shots_fix/62-grass.jpg"
+  },
+  {
+   "id": 63,
+   "kind": "grass",
+   "street": "Avenue Mohammed VI",
+   "edgeBefore": 1268,
+   "edgeAfter": 1263,
+   "junc": -1,
+   "x": 2880.81,
+   "z": -2412.1,
+   "beforeDetail": "grass drawn 0.14 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/63-grass.jpg",
+   "afterShot": "shots_fix/63-grass.jpg"
+  },
+  {
+   "id": 64,
+   "kind": "cut",
+   "street": "La Corniche",
+   "edgeBefore": 3339,
+   "edgeAfter": 5297,
+   "junc": 3786,
+   "x": 2887.23,
+   "z": -2643.11,
+   "beforeDetail": "route_failed from #3339 to #3340",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/64-cut.jpg",
+   "afterShot": "shots_fix/64-cut.jpg"
+  },
+  {
+   "id": 65,
+   "kind": "height",
+   "street": "La Corniche",
+   "edgeBefore": 4757,
+   "edgeAfter": 4670,
+   "junc": 3786,
+   "x": 2887.13,
+   "z": -2646.13,
+   "beforeDetail": "drawn road -0.17 m from the driven road",
+   "fixApplied": "Aligned asphalt vertices to q.y across junctions, rebuilt side.bin clearances, sank overlapping kerbs/pavements by 8 cm, and capped deg=2 bends in src/city.js & src/net.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/65-height.jpg",
+   "afterShot": "shots_fix/65-height.jpg"
+  },
+  {
+   "id": 66,
+   "kind": "cut",
+   "street": "",
+   "edgeBefore": 4758,
+   "edgeAfter": 4671,
+   "junc": -1,
+   "x": 2995.35,
+   "z": -2627.77,
+   "beforeDetail": "no route from #4758 to #4687 (Avenue Abou Bakr Arrazi)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/66-cut.jpg",
+   "afterShot": "shots_fix/66-cut.jpg"
+  },
+  {
+   "id": 67,
+   "kind": "cut",
+   "street": "Avenue Sidi Mohamed Ben Abdellah",
+   "edgeBefore": 4718,
+   "edgeAfter": 4639,
+   "junc": -1,
+   "x": 2282.98,
+   "z": -784.72,
+   "beforeDetail": "no route from #4718 to #2961 (Boulevard Moulay Soulayman)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/67-cut.jpg",
+   "afterShot": "shots_fix/67-cut.jpg"
+  },
+  {
+   "id": 68,
+   "kind": "cut",
+   "street": "Place Oued El Makhazine",
+   "edgeBefore": 5223,
+   "edgeAfter": 5132,
+   "junc": 3846,
+   "x": 2301,
+   "z": -763.97,
+   "beforeDetail": "no route from #5223 to #156 (Rue Bataille Sidi Othman)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/68-cut.jpg",
+   "afterShot": "shots_fix/68-cut.jpg"
+  },
+  {
+   "id": 69,
+   "kind": "cut",
+   "street": "Boulevard Moulay Youssef",
+   "edgeBefore": 4720,
+   "edgeAfter": 2597,
+   "junc": 2598,
+   "x": 2433.4,
+   "z": -694.97,
+   "beforeDetail": "route_failed from #4720 to #1902",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/69-cut.jpg",
+   "afterShot": "shots_fix/69-cut.jpg"
+  },
+  {
+   "id": 70,
+   "kind": "grass",
+   "street": "Rue Cadi Ayad",
+   "edgeBefore": 2902,
+   "edgeAfter": 2873,
+   "junc": -1,
+   "x": 2579.89,
+   "z": -629.45,
+   "beforeDetail": "grass drawn 0.15 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/70-grass.jpg",
+   "afterShot": "shots_fix/70-grass.jpg"
+  },
+  {
+   "id": 71,
+   "kind": "grass",
+   "street": "Rue Cadi Ayad",
+   "edgeBefore": 2902,
+   "edgeAfter": 2873,
+   "junc": -1,
+   "x": 2579.18,
+   "z": -633.31,
+   "beforeDetail": "grass drawn 0.01 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/71-grass.jpg",
+   "afterShot": "shots_fix/71-grass.jpg"
+  },
+  {
+   "id": 72,
+   "kind": "grass",
+   "street": "",
+   "edgeBefore": 5082,
+   "edgeAfter": 4991,
+   "junc": 3844,
+   "x": 2595.93,
+   "z": -629.44,
+   "beforeDetail": "grass drawn 0.14 m over the asphalt (junction 3844)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/72-grass.jpg",
+   "afterShot": "shots_fix/72-grass.jpg"
+  },
+  {
+   "id": 73,
+   "kind": "grass",
+   "street": "",
+   "edgeBefore": 5082,
+   "edgeAfter": 4991,
+   "junc": 2778,
+   "x": 2592.72,
+   "z": -630.19,
+   "beforeDetail": "grass drawn 0.01 m over the asphalt (junction 2778)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/73-grass.jpg",
+   "afterShot": "shots_fix/73-grass.jpg"
+  },
+  {
+   "id": 74,
+   "kind": "grass",
+   "street": "Rue Ibn Khozima",
+   "edgeBefore": 85,
+   "edgeAfter": 85,
+   "junc": 108,
+   "x": 2745.31,
+   "z": -756.04,
+   "beforeDetail": "grass drawn 0.06 m over the asphalt (junction 108)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/74-grass.jpg",
+   "afterShot": "shots_fix/74-grass.jpg"
+  },
+  {
+   "id": 75,
+   "kind": "grass",
+   "street": "Boulevard Prince Heritier",
+   "edgeBefore": 48,
+   "edgeAfter": 48,
+   "junc": 57,
+   "x": 2705.67,
+   "z": -1044.04,
+   "beforeDetail": "grass drawn 0.03 m over the asphalt (junction 57)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/75-grass.jpg",
+   "afterShot": "shots_fix/75-grass.jpg"
+  },
+  {
+   "id": 76,
+   "kind": "grass",
+   "street": "Avenue de la Résistance",
+   "edgeBefore": 5580,
+   "edgeAfter": 5482,
+   "junc": 1964,
+   "x": 2912.37,
+   "z": -1381.85,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt (junction 1964)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/76-grass.jpg",
+   "afterShot": "shots_fix/76-grass.jpg"
+  },
+  {
+   "id": 77,
+   "kind": "grass",
+   "street": "Avenue de la Résistance",
+   "edgeBefore": 5580,
+   "edgeAfter": 5482,
+   "junc": -1,
+   "x": 2908.99,
+   "z": -1379.72,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/77-grass.jpg",
+   "afterShot": "shots_fix/77-grass.jpg"
+  },
+  {
+   "id": 78,
+   "kind": "grass",
+   "street": "Avenue Abou Bakr Arrazi",
+   "edgeBefore": 42,
+   "edgeAfter": 42,
+   "junc": 51,
+   "x": 3231.94,
+   "z": -1241.83,
+   "beforeDetail": "grass drawn 0.14 m over the asphalt (junction 51)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/78-grass.jpg",
+   "afterShot": "shots_fix/78-grass.jpg"
+  },
+  {
+   "id": 79,
+   "kind": "grass",
+   "street": "Avenue Abou Bakr Arrazi",
+   "edgeBefore": 42,
+   "edgeAfter": 42,
+   "junc": -1,
+   "x": 3192.82,
+   "z": -1157.59,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/79-grass.jpg",
+   "afterShot": "shots_fix/79-grass.jpg"
+  },
+  {
+   "id": 80,
+   "kind": "cut",
+   "street": "Rue Jordanie",
+   "edgeBefore": 1186,
+   "edgeAfter": 1182,
+   "junc": -1,
+   "x": 3805.31,
+   "z": -1000.62,
+   "beforeDetail": "no route from #1186 to #1165 (Rue Ibn Jarroume)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/80-cut.jpg",
+   "afterShot": "shots_fix/80-cut.jpg"
+  },
+  {
+   "id": 81,
+   "kind": "cut",
+   "street": "RN16",
+   "edgeBefore": 5131,
+   "edgeAfter": 5040,
+   "junc": -1,
+   "x": 4760.47,
+   "z": -823.37,
+   "beforeDetail": "no route from #5131 to #1396 (Route de Tétouan)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/81-cut.jpg",
+   "afterShot": "shots_fix/81-cut.jpg"
+  },
+  {
+   "id": 82,
+   "kind": "cut",
+   "street": "",
+   "edgeBefore": 4366,
+   "edgeAfter": 4291,
+   "junc": -1,
+   "x": 5032.48,
+   "z": -858.28,
+   "beforeDetail": "no route from #4366 to #5646 (Avenue Mohammed VI)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/82-cut.jpg",
+   "afterShot": "shots_fix/82-cut.jpg"
+  },
+  {
+   "id": 83,
+   "kind": "cut",
+   "street": "RN16",
+   "edgeBefore": 5138,
+   "edgeAfter": 5047,
+   "junc": -1,
+   "x": 5042.8,
+   "z": -801.76,
+   "beforeDetail": "no route from #5138 to #1105 (Avenue Yacoub El Mansour)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/83-cut.jpg",
+   "afterShot": "shots_fix/83-cut.jpg"
+  },
+  {
+   "id": 84,
+   "kind": "grass",
+   "street": "Rue Plage Markala",
+   "edgeBefore": 1670,
+   "edgeAfter": 1664,
+   "junc": 1790,
+   "x": 6334.27,
+   "z": -510.61,
+   "beforeDetail": "grass drawn 0.12 m over the asphalt (junction 1790)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/84-grass.jpg",
+   "afterShot": "shots_fix/84-grass.jpg"
+  },
+  {
+   "id": 85,
+   "kind": "grass",
+   "street": "Rue Plage Markala",
+   "edgeBefore": 1672,
+   "edgeAfter": 1664,
+   "junc": 1790,
+   "x": 6329.89,
+   "z": -509.34,
+   "beforeDetail": "grass drawn 0.10 m over the asphalt (junction 1790)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/85-grass.jpg",
+   "afterShot": "shots_fix/85-grass.jpg"
+  },
+  {
+   "id": 86,
+   "kind": "grass",
+   "street": "Rue Plage Markala",
+   "edgeBefore": 1670,
+   "edgeAfter": 1664,
+   "junc": 1790,
+   "x": 6332.63,
+   "z": -509.9,
+   "beforeDetail": "grass drawn 0.08 m over the asphalt (junction 1790)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/86-grass.jpg",
+   "afterShot": "shots_fix/86-grass.jpg"
+  },
+  {
+   "id": 87,
+   "kind": "grass",
+   "street": "Rue 96",
+   "edgeBefore": 4258,
+   "edgeAfter": 4198,
+   "junc": 3598,
+   "x": 6324.84,
+   "z": -415.87,
+   "beforeDetail": "grass drawn 0.06 m over the asphalt (junction 3598)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/87-grass.jpg",
+   "afterShot": "shots_fix/87-grass.jpg"
+  },
+  {
+   "id": 88,
+   "kind": "grass",
+   "street": "Rue Plage Azla",
+   "edgeBefore": 2433,
+   "edgeAfter": 2411,
+   "junc": 2460,
+   "x": 6433.19,
+   "z": -508.85,
+   "beforeDetail": "grass drawn 0.07 m over the asphalt (junction 2460)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/88-grass.jpg",
+   "afterShot": "shots_fix/88-grass.jpg"
+  },
+  {
+   "id": 89,
+   "kind": "grass",
+   "street": "Rue Plage Azla",
+   "edgeBefore": 2433,
+   "edgeAfter": 2411,
+   "junc": 2460,
+   "x": 6434.03,
+   "z": -510.04,
+   "beforeDetail": "grass drawn 0.06 m over the asphalt (junction 2460)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/89-grass.jpg",
+   "afterShot": "shots_fix/89-grass.jpg"
+  },
+  {
+   "id": 90,
+   "kind": "cut",
+   "street": "",
+   "edgeBefore": 3232,
+   "edgeAfter": 5179,
+   "junc": 2975,
+   "x": 7126.05,
+   "z": -433.66,
+   "beforeDetail": "route_failed from #3232 to #5272",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/90-cut.jpg",
+   "afterShot": "shots_fix/90-cut.jpg"
+  },
+  {
+   "id": 91,
+   "kind": "cut",
+   "street": "",
+   "edgeBefore": 3232,
+   "edgeAfter": 3198,
+   "junc": -1,
+   "x": 7150.55,
+   "z": -413.17,
+   "beforeDetail": "no route from #3232 to #2065 (Rue Plage R'milat)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/91-cut.jpg",
+   "afterShot": "shots_fix/91-cut.jpg"
+  },
+  {
+   "id": 92,
+   "kind": "grass",
+   "street": "",
+   "edgeBefore": 1172,
+   "edgeAfter": 1168,
+   "junc": 1288,
+   "x": 4257.64,
+   "z": -187.19,
+   "beforeDetail": "grass drawn 0.10 m over the asphalt (junction 1288)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/92-grass.jpg",
+   "afterShot": "shots_fix/92-grass.jpg"
+  },
+  {
+   "id": 93,
+   "kind": "cut",
+   "street": "Rue 18",
+   "edgeBefore": 330,
+   "edgeAfter": 3555,
+   "junc": 376,
+   "x": 2215.05,
+   "z": 769.47,
+   "beforeDetail": "route_failed from #330 to #348",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/93-cut.jpg",
+   "afterShot": "shots_fix/93-cut.jpg"
+  },
+  {
+   "id": 94,
+   "kind": "grass",
+   "street": "Rue Amhed Ben Mohamed Rachdi",
+   "edgeBefore": 313,
+   "edgeAfter": 312,
+   "junc": -1,
+   "x": 1912.09,
+   "z": 662.34,
+   "beforeDetail": "grass drawn 0.01 m over the asphalt",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/94-grass.jpg",
+   "afterShot": "shots_fix/94-grass.jpg"
+  },
+  {
+   "id": 95,
+   "kind": "grass",
+   "street": "Rue Amhed Ben Mohamed Rachdi",
+   "edgeBefore": 314,
+   "edgeAfter": 313,
+   "junc": 356,
+   "x": 1912,
+   "z": 672.71,
+   "beforeDetail": "grass drawn 0.04 m over the asphalt (junction 356)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/95-grass.jpg",
+   "afterShot": "shots_fix/95-grass.jpg"
+  },
+  {
+   "id": 96,
+   "kind": "cut",
+   "street": "Rue Rahal Ben Ahmed",
+   "edgeBefore": 344,
+   "edgeAfter": 342,
+   "junc": -1,
+   "x": 2069.61,
+   "z": 396.49,
+   "beforeDetail": "no route from #344 to #2593 (Boulevard Faisal Ibn Abdelaziz)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/96-cut.jpg",
+   "afterShot": "shots_fix/96-cut.jpg"
+  },
+  {
+   "id": 97,
+   "kind": "cut",
+   "street": "Rue Rahal Ben Ahmed",
+   "edgeBefore": 344,
+   "edgeAfter": 342,
+   "junc": 393,
+   "x": 2122.12,
+   "z": 335.81,
+   "beforeDetail": "no route from #344 to #646 (Rue Mohamed Ghrit)",
+   "fixApplied": "Converted dead-end and SCC-blocking one-way edges to two-way in tools/fix-city.mjs for 100% hub reachability",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/97-cut.jpg",
+   "afterShot": "shots_fix/97-cut.jpg"
+  },
+  {
+   "id": 98,
+   "kind": "grass",
+   "street": "Rue Martyre Mohamed Lahbibe",
+   "edgeBefore": 677,
+   "edgeAfter": 674,
+   "junc": 778,
+   "x": 672.96,
+   "z": 87.45,
+   "beforeDetail": "grass drawn 0.13 m over the asphalt (junction 778)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/98-grass.jpg",
+   "afterShot": "shots_fix/98-grass.jpg"
+  },
+  {
+   "id": 99,
+   "kind": "grass",
+   "street": "Rue Martyre Mohamed Lahbibe",
+   "edgeBefore": 678,
+   "edgeAfter": 675,
+   "junc": 778,
+   "x": 680.68,
+   "z": 90.49,
+   "beforeDetail": "grass drawn 0.05 m over the asphalt (junction 778)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/99-grass.jpg",
+   "afterShot": "shots_fix/99-grass.jpg"
+  },
+  {
+   "id": 100,
+   "kind": "grass",
+   "street": "Avenue des Roses",
+   "edgeBefore": 791,
+   "edgeAfter": 787,
+   "junc": 901,
+   "x": 192.8,
+   "z": 344.33,
+   "beforeDetail": "grass drawn 0.30 m over the asphalt (junction 901)",
+   "fixApplied": "Carved ground.bin <= roadY - 0.55 m within 14 m + clamped chunk ground vertices below q.y - 0.40 m in src/city.js",
+   "resolved": true,
+   "remainingHere": [],
+   "beforeShot": "shots/100-grass.jpg",
+   "afterShot": "shots_fix/100-grass.jpg"
+  }
+ ],
+ "dataRepairs": {
+  "degenerateEdgesRemoved": [
+   {
+    "oldEdge": 203,
+    "junction": 236,
+    "len": 0,
+    "x": 3767.84,
+    "z": 376.95,
+    "street": "Rue B"
+   },
+   {
+    "oldEdge": 336,
+    "junction": 383,
+    "len": 0,
+    "x": 2353.09,
+    "z": 731.66,
+    "street": "Rue Houssine Ben Ali"
+   },
+   {
+    "oldEdge": 620,
+    "junction": 715,
+    "len": 0,
+    "x": 817.45,
+    "z": -182.36,
+    "street": "Rue 157 زنقة"
+   },
+   {
+    "oldEdge": 714,
+    "junction": 822,
+    "len": 0,
+    "x": -9.92,
+    "z": 1058.58,
+    "street": "Rue des Pins"
+   },
+   {
+    "oldEdge": 1253,
+    "junction": 1370,
+    "len": 0,
+    "x": 870.68,
+    "z": -2243.92,
+    "street": "Rue 14 زنقة"
+   },
+   {
+    "oldEdge": 1631,
+    "junction": 1742,
+    "len": 0,
+    "x": 4781.08,
+    "z": -860.65,
+    "street": "Avenue De France"
+   },
+   {
+    "oldEdge": 1671,
+    "junction": 1790,
+    "len": 0,
+    "x": 6331.16,
+    "z": -513.72,
+    "street": "Rue Plage Markala"
+   },
+   {
+    "oldEdge": 1672,
+    "junction": 1790,
+    "len": 0,
+    "x": 6331.16,
+    "z": -513.72,
+    "street": "Rue Plage Markala"
+   },
+   {
+    "oldEdge": 1673,
+    "junction": 1790,
+    "len": 0,
+    "x": 6331.16,
+    "z": -513.72,
+    "street": "Rue Plage Markala"
+   },
+   {
+    "oldEdge": 2037,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2038,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2039,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2040,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2041,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2042,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2043,
+    "junction": 2122,
+    "len": 0,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2045,
+    "junction": 2125,
+    "len": 0,
+    "x": 2157.3,
+    "z": -2601.96,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2046,
+    "junction": 2125,
+    "len": 0,
+    "x": 2157.3,
+    "z": -2601.96,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2047,
+    "junction": 2125,
+    "len": 0,
+    "x": 2157.3,
+    "z": -2601.96,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2048,
+    "junction": 2125,
+    "len": 0,
+    "x": 2157.3,
+    "z": -2601.96,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2406,
+    "junction": 2433,
+    "len": 0,
+    "x": 4040.32,
+    "z": 44.48,
+    "street": "Rue Al Hassan Ghassal"
+   },
+   {
+    "oldEdge": 2432,
+    "junction": 2460,
+    "len": 0,
+    "x": 6436.72,
+    "z": -505.94,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2434,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2435,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2436,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2437,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2438,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2439,
+    "junction": 2461,
+    "len": 0,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2441,
+    "junction": 2464,
+    "len": 0,
+    "x": 6439.43,
+    "z": -519.28,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2969,
+    "junction": 2817,
+    "len": 0,
+    "x": 3720.92,
+    "z": -758.35,
+    "street": "Rue Abi Jarir Tabari"
+   },
+   {
+    "oldEdge": 2970,
+    "junction": 2817,
+    "len": 0,
+    "x": 3720.92,
+    "z": -758.35,
+    "street": "Rue Abi Jarir Tabari"
+   },
+   {
+    "oldEdge": 3066,
+    "junction": 2470,
+    "len": 0,
+    "x": 2292.64,
+    "z": -2005.96,
+    "street": "Rue d'Angleterre"
+   },
+   {
+    "oldEdge": 3067,
+    "junction": 2470,
+    "len": 0,
+    "x": 2292.64,
+    "z": -2005.96,
+    "street": "Rue d'Angleterre"
+   },
+   {
+    "oldEdge": 3111,
+    "junction": 2893,
+    "len": 0,
+    "x": 3257.16,
+    "z": 152.34,
+    "street": "Boulevard Tarik Ibn Ziad شارع طارق بن زياد"
+   },
+   {
+    "oldEdge": 3251,
+    "junction": 2987,
+    "len": 0,
+    "x": 2763.62,
+    "z": -103.41,
+    "street": "Place Volubilis"
+   },
+   {
+    "oldEdge": 3254,
+    "junction": 2988,
+    "len": 0,
+    "x": 2757.31,
+    "z": -98.96,
+    "street": "Place Volubilis"
+   },
+   {
+    "oldEdge": 3360,
+    "junction": 3060,
+    "len": 0,
+    "x": 959.1,
+    "z": -2053.77,
+    "street": "Avenue Ezz Ben Abdesselam"
+   },
+   {
+    "oldEdge": 3649,
+    "junction": 1071,
+    "len": 0,
+    "x": 2604.83,
+    "z": 1891.43,
+    "street": "Rue 84"
+   },
+   {
+    "oldEdge": 3737,
+    "junction": 3279,
+    "len": 0,
+    "x": 3273.4,
+    "z": 1155.32,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 3806,
+    "junction": 3310,
+    "len": 0,
+    "x": 3496.26,
+    "z": 1699.06,
+    "street": "Rue 7 زنقة"
+   },
+   {
+    "oldEdge": 3807,
+    "junction": 3310,
+    "len": 0,
+    "x": 3496.26,
+    "z": 1699.06,
+    "street": "Rue 7 زنقة"
+   },
+   {
+    "oldEdge": 3924,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3925,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3926,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3927,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3928,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3929,
+    "junction": 3379,
+    "len": 0,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3943,
+    "junction": 3392,
+    "len": 0,
+    "x": 3316.71,
+    "z": 416.98,
+    "street": "Rue 23 زنقة"
+   },
+   {
+    "oldEdge": 3985,
+    "junction": 3433,
+    "len": 0,
+    "x": 3155.2,
+    "z": 340.26,
+    "street": "Rue 22 زنقة"
+   },
+   {
+    "oldEdge": 4143,
+    "junction": 3522,
+    "len": 0,
+    "x": 3841.82,
+    "z": 373.62,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4144,
+    "junction": 3522,
+    "len": 0,
+    "x": 3841.82,
+    "z": 373.62,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4145,
+    "junction": 3522,
+    "len": 0,
+    "x": 3841.82,
+    "z": 373.62,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4147,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4148,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4149,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4153,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4154,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4155,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4156,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4157,
+    "junction": 3528,
+    "len": 0,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4258,
+    "junction": 3598,
+    "len": 0,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4259,
+    "junction": 3598,
+    "len": 0,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4260,
+    "junction": 3598,
+    "len": 0,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4261,
+    "junction": 3598,
+    "len": 0,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4262,
+    "junction": 3598,
+    "len": 0,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4285,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4286,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4289,
+    "junction": 3612,
+    "len": 0,
+    "x": 6229.2,
+    "z": -644.93,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4291,
+    "junction": 3613,
+    "len": 0,
+    "x": 6232.81,
+    "z": -648.27,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4292,
+    "junction": 3613,
+    "len": 0,
+    "x": 6232.81,
+    "z": -648.27,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4293,
+    "junction": 3613,
+    "len": 0,
+    "x": 6232.81,
+    "z": -648.27,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4296,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 77"
+   },
+   {
+    "oldEdge": 4297,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 77"
+   },
+   {
+    "oldEdge": 4298,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 77"
+   },
+   {
+    "oldEdge": 4299,
+    "junction": 3616,
+    "len": 0,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 77"
+   },
+   {
+    "oldEdge": 4409,
+    "junction": 3661,
+    "len": 0,
+    "x": 3677.61,
+    "z": 305.79,
+    "street": "Rue 39"
+   },
+   {
+    "oldEdge": 4419,
+    "junction": 3665,
+    "len": 0,
+    "x": 2621.97,
+    "z": -1616.78,
+    "street": "Rue Zariab"
+   },
+   {
+    "oldEdge": 4420,
+    "junction": 3665,
+    "len": 0,
+    "x": 2621.97,
+    "z": -1616.78,
+    "street": "Rue Zariab"
+   },
+   {
+    "oldEdge": 4421,
+    "junction": 3665,
+    "len": 0,
+    "x": 2621.97,
+    "z": -1616.78,
+    "street": "Rue Zariab"
+   },
+   {
+    "oldEdge": 4725,
+    "junction": 3775,
+    "len": 0,
+    "x": 2466.78,
+    "z": -1793.58,
+    "street": "Rue de la Liberté شارع الحرية"
+   },
+   {
+    "oldEdge": 4749,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4750,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4751,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4752,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4753,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4754,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4755,
+    "junction": 3782,
+    "len": 0,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4780,
+    "junction": 3796,
+    "len": 0,
+    "x": 970.83,
+    "z": 1605.66,
+    "street": ""
+   },
+   {
+    "oldEdge": 4881,
+    "junction": 3823,
+    "len": 0,
+    "x": -12.63,
+    "z": 1081.93,
+    "street": ""
+   },
+   {
+    "oldEdge": 4967,
+    "junction": 3853,
+    "len": 0,
+    "x": 3392.5,
+    "z": 194.59,
+    "street": "Rue 106"
+   },
+   {
+    "oldEdge": 4978,
+    "junction": 3860,
+    "len": 0,
+    "x": 3816.56,
+    "z": 980.74,
+    "street": ""
+   },
+   {
+    "oldEdge": 5227,
+    "junction": 2277,
+    "len": 0,
+    "x": 1512.19,
+    "z": -2156.07,
+    "street": ""
+   },
+   {
+    "oldEdge": 5228,
+    "junction": 2277,
+    "len": 0,
+    "x": 1512.19,
+    "z": -2156.07,
+    "street": ""
+   },
+   {
+    "oldEdge": 5390,
+    "junction": 3786,
+    "len": 0,
+    "x": 2885.43,
+    "z": -2643.11,
+    "street": "La Corniche الكرنيش"
+   },
+   {
+    "oldEdge": 5424,
+    "junction": 2661,
+    "len": 0,
+    "x": 2322.42,
+    "z": -748.34,
+    "street": "Place Oued El Makhazine"
+   },
+   {
+    "oldEdge": 5541,
+    "junction": 2541,
+    "len": 0,
+    "x": -983.46,
+    "z": 1319.89,
+    "street": ""
+   },
+   {
+    "oldEdge": 5552,
+    "junction": 3998,
+    "len": 0,
+    "x": -1124.22,
+    "z": 1431.08,
+    "street": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "oldEdge": 5562,
+    "junction": 3989,
+    "len": 0,
+    "x": 3256.26,
+    "z": -1249.83,
+    "street": "Place des Nations ساحة الأمم"
+   },
+   {
+    "oldEdge": 5589,
+    "junction": 4004,
+    "len": 0,
+    "x": 2218.66,
+    "z": -1754.66,
+    "street": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "oldEdge": 5624,
+    "junction": 4012,
+    "len": 0,
+    "x": 3603.63,
+    "z": -1168.66,
+    "street": "Rondpoint Nejma"
+   },
+   {
+    "oldEdge": 5661,
+    "junction": 3745,
+    "len": 0,
+    "x": 3372.65,
+    "z": -1582.31,
+    "street": "Avenue Mohammed VI شارع محمد السادس"
+   }
+  ],
+  "microEdgesContracted": [
+   {
+    "oldEdge": 203,
+    "junctionA": 236,
+    "junctionB": 237,
+    "mergedInto": 236,
+    "len": 1.43,
+    "x": 3767.84,
+    "z": 376.95,
+    "street": "Rue B"
+   },
+   {
+    "oldEdge": 1672,
+    "junctionA": 1790,
+    "junctionB": 1791,
+    "mergedInto": 1790,
+    "len": 0.9,
+    "x": 6331.16,
+    "z": -513.72,
+    "street": "Rue Plage Markala"
+   },
+   {
+    "oldEdge": 2038,
+    "junctionA": 2122,
+    "junctionB": 2123,
+    "mergedInto": 2122,
+    "len": 0.9,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2041,
+    "junctionA": 2123,
+    "junctionB": 2124,
+    "mergedInto": 2122,
+    "len": 1.43,
+    "x": 2051.74,
+    "z": -2571.94,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2046,
+    "junctionA": 2125,
+    "junctionB": 2126,
+    "mergedInto": 2125,
+    "len": 1.44,
+    "x": 2157.3,
+    "z": -2601.96,
+    "street": "Rue de la Kasbah"
+   },
+   {
+    "oldEdge": 2436,
+    "junctionA": 2461,
+    "junctionB": 2462,
+    "mergedInto": 2461,
+    "len": 1.12,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2438,
+    "junctionA": 2462,
+    "junctionB": 2463,
+    "mergedInto": 2461,
+    "len": 1.11,
+    "x": 6440.33,
+    "z": -514.83,
+    "street": "Rue Plage Azla"
+   },
+   {
+    "oldEdge": 2970,
+    "junctionA": 2817,
+    "junctionB": 1694,
+    "mergedInto": 2817,
+    "len": 1.43,
+    "x": 3720.92,
+    "z": -758.35,
+    "street": "Rue Abi Jarir Tabari"
+   },
+   {
+    "oldEdge": 3066,
+    "junctionA": 2470,
+    "junctionB": 2876,
+    "mergedInto": 2470,
+    "len": 0.91,
+    "x": 2292.64,
+    "z": -2005.96,
+    "street": "Rue d'Angleterre"
+   },
+   {
+    "oldEdge": 3251,
+    "junctionA": 2987,
+    "junctionB": 1857,
+    "mergedInto": 2987,
+    "len": 1.11,
+    "x": 2763.62,
+    "z": -103.41,
+    "street": "Place Volubilis"
+   },
+   {
+    "oldEdge": 3254,
+    "junctionA": 2988,
+    "junctionB": 2989,
+    "mergedInto": 2988,
+    "len": 1.8,
+    "x": 2757.31,
+    "z": -98.96,
+    "street": "Place Volubilis"
+   },
+   {
+    "oldEdge": 3649,
+    "junctionA": 1071,
+    "junctionB": 3227,
+    "mergedInto": 1071,
+    "len": 1.8,
+    "x": 2604.83,
+    "z": 1891.43,
+    "street": "Rue 84"
+   },
+   {
+    "oldEdge": 3925,
+    "junctionA": 3379,
+    "junctionB": 3380,
+    "mergedInto": 3379,
+    "len": 1.43,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 3928,
+    "junctionA": 3380,
+    "junctionB": 3381,
+    "mergedInto": 3379,
+    "len": 1.11,
+    "x": 3361.82,
+    "z": 519.28,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4144,
+    "junctionA": 3522,
+    "junctionB": 3523,
+    "mergedInto": 3522,
+    "len": 1.12,
+    "x": 3841.82,
+    "z": 373.62,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4148,
+    "junctionA": 3524,
+    "junctionB": 3525,
+    "mergedInto": 3524,
+    "len": 1.43,
+    "x": 3837.31,
+    "z": 353.6,
+    "street": "Rue 24 زنقة"
+   },
+   {
+    "oldEdge": 4154,
+    "junctionA": 3528,
+    "junctionB": 3529,
+    "mergedInto": 3528,
+    "len": 0.9,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4156,
+    "junctionA": 3529,
+    "junctionB": 3525,
+    "mergedInto": 3528,
+    "len": 0.9,
+    "x": 3834.61,
+    "z": 352.49,
+    "street": "Rue 25 زنقة"
+   },
+   {
+    "oldEdge": 4259,
+    "junctionA": 3598,
+    "junctionB": 3599,
+    "mergedInto": 3598,
+    "len": 1.43,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4261,
+    "junctionA": 3599,
+    "junctionB": 3600,
+    "mergedInto": 3598,
+    "len": 1.11,
+    "x": 6324.84,
+    "z": -415.87,
+    "street": "Rue 96"
+   },
+   {
+    "oldEdge": 4285,
+    "junctionA": 3609,
+    "junctionB": 3610,
+    "mergedInto": 3609,
+    "len": 1.11,
+    "x": 6222.89,
+    "z": -491.48,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4292,
+    "junctionA": 3613,
+    "junctionB": 3614,
+    "mergedInto": 3613,
+    "len": 1.44,
+    "x": 6232.81,
+    "z": -648.27,
+    "street": "Rue 80"
+   },
+   {
+    "oldEdge": 4297,
+    "junctionA": 3616,
+    "junctionB": 3609,
+    "mergedInto": 3616,
+    "len": 1.11,
+    "x": 6222.89,
+    "z": -490.37,
+    "street": "Rue 77"
+   },
+   {
+    "oldEdge": 4420,
+    "junctionA": 3665,
+    "junctionB": 3666,
+    "mergedInto": 3665,
+    "len": 1.43,
+    "x": 2621.97,
+    "z": -1616.78,
+    "street": "Rue Zariab"
+   },
+   {
+    "oldEdge": 4750,
+    "junctionA": 3782,
+    "junctionB": 3783,
+    "mergedInto": 3782,
+    "len": 0.9,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4752,
+    "junctionA": 3783,
+    "junctionB": 3784,
+    "mergedInto": 3782,
+    "len": 0.91,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4754,
+    "junctionA": 3784,
+    "junctionB": 3785,
+    "mergedInto": 3782,
+    "len": 1.43,
+    "x": 4283.93,
+    "z": 482.59,
+    "street": "Rue Sidi Ahmed Ben Yermak"
+   },
+   {
+    "oldEdge": 4780,
+    "junctionA": 3796,
+    "junctionB": 3797,
+    "mergedInto": 3796,
+    "len": 1.43,
+    "x": 970.83,
+    "z": 1605.66,
+    "street": ""
+   },
+   {
+    "oldEdge": 4881,
+    "junctionA": 3823,
+    "junctionB": 2024,
+    "mergedInto": 3823,
+    "len": 1.8,
+    "x": -12.63,
+    "z": 1081.93,
+    "street": ""
+   },
+   {
+    "oldEdge": 4978,
+    "junctionA": 3860,
+    "junctionB": 1504,
+    "mergedInto": 3860,
+    "len": 1.43,
+    "x": 3816.56,
+    "z": 980.74,
+    "street": ""
+   },
+   {
+    "oldEdge": 5227,
+    "junctionA": 2277,
+    "junctionB": 2278,
+    "mergedInto": 2277,
+    "len": 1.11,
+    "x": 1512.19,
+    "z": -2156.07,
+    "street": ""
+   },
+   {
+    "oldEdge": 5390,
+    "junctionA": 3786,
+    "junctionB": 3047,
+    "mergedInto": 3786,
+    "len": 1.8,
+    "x": 2885.43,
+    "z": -2643.11,
+    "street": "La Corniche الكرنيش"
+   },
+   {
+    "oldEdge": 5424,
+    "junctionA": 2661,
+    "junctionB": 2567,
+    "mergedInto": 2661,
+    "len": 1.8,
+    "x": 2322.42,
+    "z": -748.34,
+    "street": "Place Oued El Makhazine"
+   },
+   {
+    "oldEdge": 5541,
+    "junctionA": 2541,
+    "junctionB": 1874,
+    "mergedInto": 2541,
+    "len": 1.8,
+    "x": -983.46,
+    "z": 1319.89,
+    "street": ""
+   },
+   {
+    "oldEdge": 5589,
+    "junctionA": 4004,
+    "junctionB": 3667,
+    "mergedInto": 4004,
+    "len": 1.43,
+    "x": 2218.66,
+    "z": -1754.66,
+    "street": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "oldEdge": 5661,
+    "junctionA": 3745,
+    "junctionB": 4019,
+    "mergedInto": 3745,
+    "len": 0.9,
+    "x": 3372.65,
+    "z": -1582.31,
+    "street": "Avenue Mohammed VI شارع محمد السادس"
+   }
+  ],
+  "duplicateSamplesRemoved": 0,
+  "onewayFixedForConnectivity": [
+   {
+    "edge": 13,
+    "oldEdge": 13,
+    "reason": "oneway_dead_end",
+    "x": 2685.67,
+    "z": -1513.05,
+    "street": "Rue Zerktouni زنقة زرقطوني"
+   },
+   {
+    "edge": 156,
+    "oldEdge": 156,
+    "reason": "oneway_dead_end",
+    "x": 3381.39,
+    "z": -339.03,
+    "street": "Rue Bataille Sidi Othman"
+   },
+   {
+    "edge": 342,
+    "oldEdge": 344,
+    "reason": "oneway_dead_end",
+    "x": 2093.28,
+    "z": 369.2,
+    "street": "Rue Rahal Ben Ahmed"
+   },
+   {
+    "edge": 346,
+    "oldEdge": 348,
+    "reason": "oneway_dead_end",
+    "x": 2256.55,
+    "z": 761.13,
+    "street": "Rue Ai Benbtaher Abih"
+   },
+   {
+    "edge": 443,
+    "oldEdge": 445,
+    "reason": "oneway_dead_end",
+    "x": 350.13,
+    "z": 2135.02,
+    "street": "Boulevard Royaume d'Arabie Saoudite"
+   },
+   {
+    "edge": 875,
+    "oldEdge": 879,
+    "reason": "oneway_dead_end",
+    "x": 4049.13,
+    "z": 1278.87,
+    "street": "Rue Hj Absabdessalam Ben Haddou"
+   },
+   {
+    "edge": 1182,
+    "oldEdge": 1186,
+    "reason": "oneway_dead_end",
+    "x": 3737.16,
+    "z": -979.63,
+    "street": "Rue Jordanie"
+   },
+   {
+    "edge": 1193,
+    "oldEdge": 1197,
+    "reason": "oneway_dead_end",
+    "x": 2785.22,
+    "z": -1726.92,
+    "street": "Rue Jabha Al Wataniya"
+   },
+   {
+    "edge": 1266,
+    "oldEdge": 1271,
+    "reason": "oneway_dead_end",
+    "x": 919.28,
+    "z": -1710.71,
+    "street": "Rocade Dradeb"
+   },
+   {
+    "edge": 1764,
+    "oldEdge": 1773,
+    "reason": "oneway_dead_end",
+    "x": 2197.43,
+    "z": -770.07,
+    "street": "Rue Oued Aliane"
+   },
+   {
+    "edge": 1849,
+    "oldEdge": 1858,
+    "reason": "oneway_dead_end",
+    "x": 2764.24,
+    "z": -2160.52,
+    "street": "Rue Portugal"
+   },
+   {
+    "edge": 2034,
+    "oldEdge": 2054,
+    "reason": "oneway_dead_end",
+    "x": -1831.04,
+    "z": 2143.44,
+    "street": ""
+   },
+   {
+    "edge": 2157,
+    "oldEdge": 2177,
+    "reason": "oneway_dead_end",
+    "x": 2886.78,
+    "z": -1671.57,
+    "street": "Rue Ibn Joubair"
+   },
+   {
+    "edge": 2183,
+    "oldEdge": 2203,
+    "reason": "oneway_dead_end",
+    "x": -995.62,
+    "z": 2091.16,
+    "street": ""
+   },
+   {
+    "edge": 2420,
+    "oldEdge": 2449,
+    "reason": "oneway_dead_end",
+    "x": -1935.43,
+    "z": 2093.52,
+    "street": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edge": 2422,
+    "oldEdge": 2451,
+    "reason": "oneway_dead_end",
+    "x": -1850.12,
+    "z": 2136.96,
+    "street": ""
+   },
+   {
+    "edge": 2444,
+    "oldEdge": 2473,
+    "reason": "oneway_dead_end",
+    "x": 936.93,
+    "z": 790.85,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 2461,
+    "oldEdge": 2490,
+    "reason": "oneway_dead_end",
+    "x": 2327.97,
+    "z": 84.54,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 2464,
+    "oldEdge": 2493,
+    "reason": "oneway_dead_end",
+    "x": -241.81,
+    "z": 2129.25,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 2473,
+    "oldEdge": 2502,
+    "reason": "oneway_dead_end",
+    "x": 1109.6,
+    "z": 647.68,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 2474,
+    "oldEdge": 2503,
+    "reason": "oneway_dead_end",
+    "x": 3350.29,
+    "z": -666.32,
+    "street": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edge": 2475,
+    "oldEdge": 2504,
+    "reason": "oneway_dead_end",
+    "x": 3189.9,
+    "z": -453.72,
+    "street": "Avenue Moulay Ismail شارع مولاي إسماعيل"
+   },
+   {
+    "edge": 2609,
+    "oldEdge": 2638,
+    "reason": "oneway_dead_end",
+    "x": 2859.01,
+    "z": 2025.65,
+    "street": "Avenue Aicha Al-Moussafir"
+   },
+   {
+    "edge": 2735,
+    "oldEdge": 2764,
+    "reason": "oneway_dead_end",
+    "x": 4962.13,
+    "z": 2009.19,
+    "street": "Route de Tétouan"
+   },
+   {
+    "edge": 2869,
+    "oldEdge": 2898,
+    "reason": "oneway_dead_end",
+    "x": 3170.64,
+    "z": -450.77,
+    "street": "Avenue Moulay Ismail شارع مولاي إسماعيل"
+   },
+   {
+    "edge": 2870,
+    "oldEdge": 2899,
+    "reason": "oneway_dead_end",
+    "x": 3363.03,
+    "z": -666.91,
+    "street": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edge": 2921,
+    "oldEdge": 2950,
+    "reason": "oneway_dead_end",
+    "x": 2516.19,
+    "z": 26.1,
+    "street": "Avenue Moulay Ismail شارع مولاي إسماعيل"
+   },
+   {
+    "edge": 2985,
+    "oldEdge": 3016,
+    "reason": "oneway_dead_end",
+    "x": 4934.31,
+    "z": 1993.55,
+    "street": "Route de Tétouan"
+   },
+   {
+    "edge": 3173,
+    "oldEdge": 3207,
+    "reason": "oneway_dead_end",
+    "x": 924.11,
+    "z": 791.34,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3174,
+    "oldEdge": 3208,
+    "reason": "oneway_dead_end",
+    "x": 1113.85,
+    "z": 655.34,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3181,
+    "oldEdge": 3215,
+    "reason": "oneway_dead_end",
+    "x": 352.06,
+    "z": 2148.97,
+    "street": "Boulevard Royaume d'Arabie Saoudite"
+   },
+   {
+    "edge": 3189,
+    "oldEdge": 3223,
+    "reason": "oneway_dead_end",
+    "x": -173.95,
+    "z": 2025.97,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3190,
+    "oldEdge": 3224,
+    "reason": "oneway_dead_end",
+    "x": -57.68,
+    "z": 1829.92,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3193,
+    "oldEdge": 3227,
+    "reason": "oneway_dead_end",
+    "x": -184.63,
+    "z": 2023.97,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3194,
+    "oldEdge": 3228,
+    "reason": "oneway_dead_end",
+    "x": -39.58,
+    "z": 1822.5,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 3198,
+    "oldEdge": 3232,
+    "reason": "oneway_dead_end",
+    "x": 7141.32,
+    "z": -420.79,
+    "street": ""
+   },
+   {
+    "edge": 3248,
+    "oldEdge": 3284,
+    "reason": "oneway_dead_end",
+    "x": -1021.26,
+    "z": 2103.02,
+    "street": ""
+   },
+   {
+    "edge": 3304,
+    "oldEdge": 3340,
+    "reason": "oneway_dead_end",
+    "x": 2909.08,
+    "z": -2659.87,
+    "street": ""
+   },
+   {
+    "edge": 4291,
+    "oldEdge": 4366,
+    "reason": "oneway_dead_end",
+    "x": 5037.81,
+    "z": -851.67,
+    "street": ""
+   },
+   {
+    "edge": 4569,
+    "oldEdge": 4648,
+    "reason": "oneway_dead_end",
+    "x": 4176.88,
+    "z": 2061.61,
+    "street": "Al Oqssor"
+   },
+   {
+    "edge": 4570,
+    "oldEdge": 4649,
+    "reason": "oneway_dead_end",
+    "x": 4093.86,
+    "z": 1502.61,
+    "street": "Rue Hj Absabdessalam Ben Haddou"
+   },
+   {
+    "edge": 4616,
+    "oldEdge": 4695,
+    "reason": "oneway_dead_end",
+    "x": 2322.72,
+    "z": 76.66,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 4626,
+    "oldEdge": 4705,
+    "reason": "oneway_dead_end",
+    "x": 2911.05,
+    "z": 2102.81,
+    "street": "Avenue Aicha Al-Moussafir"
+   },
+   {
+    "edge": 4639,
+    "oldEdge": 4718,
+    "reason": "oneway_dead_end",
+    "x": 2227,
+    "z": -834.78,
+    "street": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edge": 4640,
+    "oldEdge": 4719,
+    "reason": "oneway_dead_end",
+    "x": 2230.41,
+    "z": -838.61,
+    "street": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edge": 4641,
+    "oldEdge": 4720,
+    "reason": "oneway_dead_end",
+    "x": 2381.89,
+    "z": -718.81,
+    "street": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edge": 4671,
+    "oldEdge": 4758,
+    "reason": "oneway_dead_end",
+    "x": 2955.32,
+    "z": -2601.37,
+    "street": ""
+   },
+   {
+    "edge": 4730,
+    "oldEdge": 4818,
+    "reason": "oneway_dead_end",
+    "x": 2384.56,
+    "z": -712.93,
+    "street": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edge": 4920,
+    "oldEdge": 5011,
+    "reason": "oneway_dead_end",
+    "x": 2519.23,
+    "z": 33.52,
+    "street": "Avenue Moulay Ismail شارع مولاي إسماعيل"
+   },
+   {
+    "edge": 4950,
+    "oldEdge": 5041,
+    "reason": "oneway_dead_end",
+    "x": -1066.01,
+    "z": 1393.62,
+    "street": ""
+   },
+   {
+    "edge": 4951,
+    "oldEdge": 5042,
+    "reason": "oneway_dead_end",
+    "x": -922.89,
+    "z": 1209.89,
+    "street": ""
+   },
+   {
+    "edge": 4952,
+    "oldEdge": 5043,
+    "reason": "oneway_dead_end",
+    "x": -933.57,
+    "z": 1207.98,
+    "street": ""
+   },
+   {
+    "edge": 4953,
+    "oldEdge": 5044,
+    "reason": "oneway_dead_end",
+    "x": -1072.32,
+    "z": 1387.57,
+    "street": ""
+   },
+   {
+    "edge": 5040,
+    "oldEdge": 5131,
+    "reason": "oneway_dead_end",
+    "x": 4669.65,
+    "z": -816.73,
+    "street": "RN16"
+   },
+   {
+    "edge": 5041,
+    "oldEdge": 5132,
+    "reason": "oneway_dead_end",
+    "x": 4668.29,
+    "z": -826.74,
+    "street": "RN16"
+   },
+   {
+    "edge": 5042,
+    "oldEdge": 5133,
+    "reason": "oneway_dead_end",
+    "x": -1038.38,
+    "z": 1311.54,
+    "street": ""
+   },
+   {
+    "edge": 5045,
+    "oldEdge": 5136,
+    "reason": "oneway_dead_end",
+    "x": -1015.91,
+    "z": 1282.52,
+    "street": ""
+   },
+   {
+    "edge": 5046,
+    "oldEdge": 5137,
+    "reason": "oneway_dead_end",
+    "x": 5109.23,
+    "z": -756.62,
+    "street": "RN16"
+   },
+   {
+    "edge": 5047,
+    "oldEdge": 5138,
+    "reason": "oneway_dead_end",
+    "x": 5110.05,
+    "z": -766.54,
+    "street": "RN16"
+   },
+   {
+    "edge": 5054,
+    "oldEdge": 5145,
+    "reason": "oneway_dead_end",
+    "x": 3460.45,
+    "z": -1133.14,
+    "street": "Rue Rossini"
+   },
+   {
+    "edge": 5478,
+    "oldEdge": 5576,
+    "reason": "oneway_dead_end",
+    "x": 2667.98,
+    "z": -1586.2,
+    "street": "Rue Zeriabe"
+   },
+   {
+    "edge": 5487,
+    "oldEdge": 5585,
+    "reason": "oneway_dead_end",
+    "x": 2190.39,
+    "z": -1621.59,
+    "street": "Avenue Msallah"
+   },
+   {
+    "edge": 4373,
+    "oldEdge": 4452,
+    "reason": "scc_connectivity_bridge",
+    "x": 956.9,
+    "z": -1553,
+    "street": "Casa Blanca"
+   },
+   {
+    "edge": 2867,
+    "oldEdge": 2896,
+    "reason": "scc_connectivity_bridge",
+    "x": 2239.51,
+    "z": -581.76,
+    "street": "Rue Akhansae"
+   },
+   {
+    "edge": 564,
+    "oldEdge": 566,
+    "reason": "scc_connectivity_bridge",
+    "x": 2659.93,
+    "z": -1923.15,
+    "street": "Rue Anoual زنقة انوال"
+   },
+   {
+    "edge": 1841,
+    "oldEdge": 1850,
+    "reason": "scc_connectivity_bridge",
+    "x": 2687.52,
+    "z": -1862.28,
+    "street": "Rue Anoual زنقة انوال"
+   },
+   {
+    "edge": 5477,
+    "oldEdge": 5575,
+    "reason": "scc_connectivity_bridge",
+    "x": 2661.22,
+    "z": -1849.17,
+    "street": "Rue Anoual زنقة انوال"
+   },
+   {
+    "edge": 2421,
+    "oldEdge": 2450,
+    "reason": "scc_connectivity_bridge",
+    "x": -1882.41,
+    "z": 2096.84,
+    "street": ""
+   },
+   {
+    "edge": 1450,
+    "oldEdge": 1455,
+    "reason": "scc_connectivity_bridge",
+    "x": 4825.79,
+    "z": 1819.88,
+    "street": ""
+   },
+   {
+    "edge": 2035,
+    "oldEdge": 2055,
+    "reason": "scc_connectivity_bridge",
+    "x": -1868.54,
+    "z": 2096.87,
+    "street": ""
+   },
+   {
+    "edge": 3183,
+    "oldEdge": 3217,
+    "reason": "scc_connectivity_bridge",
+    "x": -109.85,
+    "z": 1985.61,
+    "street": ""
+   },
+   {
+    "edge": 1314,
+    "oldEdge": 1319,
+    "reason": "scc_connectivity_bridge",
+    "x": -1939.09,
+    "z": 2115.67,
+    "street": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edge": 3182,
+    "oldEdge": 3216,
+    "reason": "scc_connectivity_bridge",
+    "x": -187.08,
+    "z": 2056.87,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edge": 4835,
+    "oldEdge": 4924,
+    "reason": "scc_connectivity_bridge",
+    "x": -188.51,
+    "z": 2014.89,
+    "street": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   }
+  ],
+  "kinksSmoothed": [
+   {
+    "edge": 254,
+    "oldEdge": 255,
+    "street": "Rue Ghazwat Bani Al Moustalik",
+    "beforeDeg": 77,
+    "afterDeg": 56,
+    "x": 3547.91,
+    "z": 211.53
+   },
+   {
+    "edge": 337,
+    "oldEdge": 339,
+    "street": "Rue Imam Tabarani",
+    "beforeDeg": 77,
+    "afterDeg": 50,
+    "x": 2000.62,
+    "z": -509.77
+   },
+   {
+    "edge": 431,
+    "oldEdge": 433,
+    "street": "Rue Ibn Al Haj Harhaj Amradui",
+    "beforeDeg": 75,
+    "afterDeg": 49,
+    "x": 1219.85,
+    "z": -1069.65
+   },
+   {
+    "edge": 1253,
+    "oldEdge": 1258,
+    "street": "Rue Al Jabal",
+    "beforeDeg": 68,
+    "afterDeg": 45,
+    "x": 388.54,
+    "z": -2831.24
+   },
+   {
+    "edge": 1849,
+    "oldEdge": 1858,
+    "street": "Rue Portugal",
+    "beforeDeg": 138,
+    "afterDeg": 57,
+    "x": 2732.1,
+    "z": -2134.84
+   },
+   {
+    "edge": 2172,
+    "oldEdge": 2192,
+    "street": "",
+    "beforeDeg": 82,
+    "afterDeg": 107,
+    "x": 4571.44,
+    "z": 1647.75
+   },
+   {
+    "edge": 3218,
+    "oldEdge": 3253,
+    "street": "Place Volubilis",
+    "beforeDeg": 114,
+    "afterDeg": 49,
+    "x": 2757.76,
+    "z": -102.63
+   },
+   {
+    "edge": 3425,
+    "oldEdge": 3462,
+    "street": "Rue 11 زنقة",
+    "beforeDeg": 68,
+    "afterDeg": 52,
+    "x": 727.65,
+    "z": 1875.93
+   },
+   {
+    "edge": 3537,
+    "oldEdge": 3574,
+    "street": "Rue 58",
+    "beforeDeg": 68,
+    "afterDeg": 58,
+    "x": 2011.45,
+    "z": 696.75
+   },
+   {
+    "edge": 4445,
+    "oldEdge": 4524,
+    "street": "Rue 5 زنقة",
+    "beforeDeg": 70,
+    "afterDeg": 48,
+    "x": 1967.44,
+    "z": -375.37
+   },
+   {
+    "edge": 4982,
+    "oldEdge": 5073,
+    "street": "",
+    "beforeDeg": 78,
+    "afterDeg": 62,
+    "x": 3466.18,
+    "z": 720.22
+   },
+   {
+    "edge": 5070,
+    "oldEdge": 5161,
+    "street": "Rue Hafid Ibn Abdelbarre",
+    "beforeDeg": 69,
+    "afterDeg": 55,
+    "x": 2062.56,
+    "z": -707.74
+   },
+   {
+    "edge": 5315,
+    "oldEdge": 5409,
+    "street": "",
+    "beforeDeg": 70,
+    "afterDeg": 50,
+    "x": 6967.77,
+    "z": -54.83
+   }
+  ],
+  "steepGradesSmoothed": [
+   {
+    "edge": 1092,
+    "oldEdge": 1096,
+    "street": "Rue Shakespeare",
+    "beforeGrade": 0.347,
+    "afterGrade": 0.073,
+    "x": 1059.83,
+    "z": -3086.37
+   },
+   {
+    "edge": 1195,
+    "oldEdge": 1199,
+    "street": "Rue 25 زنقة",
+    "beforeGrade": 0.294,
+    "afterGrade": 0.289,
+    "x": 857.34,
+    "z": 1365.62
+   },
+   {
+    "edge": 1200,
+    "oldEdge": 1204,
+    "street": "Rue 6 زنقة",
+    "beforeGrade": 0.335,
+    "afterGrade": 0.284,
+    "x": 869.88,
+    "z": 1265.67
+   },
+   {
+    "edge": 1201,
+    "oldEdge": 1205,
+    "street": "Rue 6 زنقة",
+    "beforeGrade": 0.35,
+    "afterGrade": 0.348,
+    "x": 892.34,
+    "z": 1287.96
+   },
+   {
+    "edge": 1202,
+    "oldEdge": 1206,
+    "street": "Rue 6 زنقة",
+    "beforeGrade": 0.318,
+    "afterGrade": 0.279,
+    "x": 913.66,
+    "z": 1310.21
+   },
+   {
+    "edge": 1727,
+    "oldEdge": 1736,
+    "street": "",
+    "beforeGrade": 0.392,
+    "afterGrade": 0.279,
+    "x": -800.18,
+    "z": -3356.02
+   },
+   {
+    "edge": 2157,
+    "oldEdge": 2177,
+    "street": "Rue Ibn Joubair",
+    "beforeGrade": 0.316,
+    "afterGrade": 0.233,
+    "x": 2886.78,
+    "z": -1671.57
+   },
+   {
+    "edge": 2457,
+    "oldEdge": 2486,
+    "street": "Rue Al Medieq",
+    "beforeGrade": 0.297,
+    "afterGrade": 0.289,
+    "x": 911.28,
+    "z": 1252.61
+   },
+   {
+    "edge": 3454,
+    "oldEdge": 3491,
+    "street": "Rue 23 زنقة",
+    "beforeGrade": 0.312,
+    "afterGrade": 0.28,
+    "x": 901.36,
+    "z": 1347.68
+   },
+   {
+    "edge": 3455,
+    "oldEdge": 3492,
+    "street": "Rue 23 زنقة",
+    "beforeGrade": 0.341,
+    "afterGrade": 0.331,
+    "x": 868.48,
+    "z": 1334.71
+   }
+  ],
+  "overlappingCarriagewaysTrimmed": [
+   {
+    "edgeA": 4,
+    "edgeB": 2997,
+    "beforeHw": [
+     4.2,
+     5.6
+    ],
+    "afterHw": [
+     3.37,
+     4.49
+    ],
+    "x": 3539.93,
+    "z": -1080.9,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edgeA": 5,
+    "edgeB": 2996,
+    "beforeHw": [
+     4.2,
+     5.6
+    ],
+    "afterHw": [
+     3.71,
+     4.95
+    ],
+    "x": 3477.74,
+    "z": -946.05,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edgeA": 435,
+    "edgeB": 4591,
+    "beforeHw": [
+     5.6,
+     4.2
+    ],
+    "afterHw": [
+     4.86,
+     3.65
+    ],
+    "x": 3777.32,
+    "z": -1364.18,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1037,
+    "edgeB": 1775,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.29,
+     3.29
+    ],
+    "x": 3668.97,
+    "z": -1366,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edgeA": 1038,
+    "edgeB": 1774,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.42,
+     3.42
+    ],
+    "x": 3621.39,
+    "z": -1260.59,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edgeA": 1256,
+    "edgeB": 4597,
+    "beforeHw": [
+     4.2,
+     5.6
+    ],
+    "afterHw": [
+     3.45,
+     4.6
+    ],
+    "x": 3165.21,
+    "z": -1713.11,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1263,
+    "edgeB": 2400,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     5.6,
+     3.36
+    ],
+    "x": 2895.42,
+    "z": -2284.74,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1263,
+    "edgeB": 2400,
+    "beforeHw": [
+     5.6,
+     3.36
+    ],
+    "afterHw": [
+     4.6,
+     2.76
+    ],
+    "x": 2895.42,
+    "z": -2284.74,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1294,
+    "edgeB": 5339,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 2358.69,
+    "z": -1741.92,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 1318,
+    "edgeB": 2674,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.3,
+     3.3
+    ],
+    "x": 2712.85,
+    "z": 1379.53,
+    "streetA": "Avenue Aicha Al-Moussafir",
+    "streetB": "Avenue Aicha Al-Moussafir"
+   },
+   {
+    "edgeA": 1319,
+    "edgeB": 2673,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.18,
+     3.18
+    ],
+    "x": 2729.8,
+    "z": 1432.06,
+    "streetA": "Avenue Aicha Al-Moussafir",
+    "streetB": "Avenue Aicha Al-Moussafir"
+   },
+   {
+    "edgeA": 1320,
+    "edgeB": 2672,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.49,
+     3.49
+    ],
+    "x": 2745.95,
+    "z": 1502.57,
+    "streetA": "Avenue Aicha Al-Moussafir",
+    "streetB": "Avenue Aicha Al-Moussafir"
+   },
+   {
+    "edgeA": 1377,
+    "edgeB": 2617,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.52,
+     3.52
+    ],
+    "x": 3275.86,
+    "z": 1451.42,
+    "streetA": "Avenue Moulay Ali Cherif",
+    "streetB": "Avenue Moulay Ali Cherif"
+   },
+   {
+    "edgeA": 1463,
+    "edgeB": 1474,
+    "beforeHw": [
+     6,
+     6
+    ],
+    "afterHw": [
+     5.21,
+     5.21
+    ],
+    "x": 308.94,
+    "z": 65.83,
+    "streetA": "Boulevard Moulay Rachid شارع مولاي رشيد",
+    "streetB": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edgeA": 1463,
+    "edgeB": 1474,
+    "beforeHw": [
+     5.21,
+     5.21
+    ],
+    "afterHw": [
+     4.11,
+     4.11
+    ],
+    "x": 308.94,
+    "z": 65.83,
+    "streetA": "Boulevard Moulay Rachid شارع مولاي رشيد",
+    "streetB": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edgeA": 1468,
+    "edgeB": 2714,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.32,
+     3.32
+    ],
+    "x": 363.16,
+    "z": 386.96,
+    "streetA": "Avenue Ben Abi Zarae",
+    "streetB": "Avenue Ben Abi Zarae"
+   },
+   {
+    "edgeA": 1507,
+    "edgeB": 2559,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.66,
+     3.66
+    ],
+    "x": 1374.25,
+    "z": 232.65,
+    "streetA": "Boulevard Faisal Ibn Abdelaziz",
+    "streetB": "Boulevard Faisal Ibn Abdelaziz"
+   },
+   {
+    "edgeA": 1508,
+    "edgeB": 2556,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.26,
+     3.26
+    ],
+    "x": 1270.72,
+    "z": 80.67,
+    "streetA": "Boulevard Faisal Ibn Abdelaziz",
+    "streetB": "Boulevard Faisal Ibn Abdelaziz"
+   },
+   {
+    "edgeA": 1534,
+    "edgeB": 2541,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.2,
+     3.2
+    ],
+    "x": 1142.37,
+    "z": -94.52,
+    "streetA": "Boulevard Faisal Ibn Abdelaziz",
+    "streetB": "Boulevard Faisal Ibn Abdelaziz"
+   },
+   {
+    "edgeA": 1541,
+    "edgeB": 1544,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.64,
+     3.64
+    ],
+    "x": 1994.09,
+    "z": -470.59,
+    "streetA": "Avenue Haroun Errachid",
+    "streetB": "Avenue Haroun Errachid"
+   },
+   {
+    "edgeA": 1565,
+    "edgeB": 1570,
+    "beforeHw": [
+     4,
+     4
+    ],
+    "afterHw": [
+     2.73,
+     2.73
+    ],
+    "x": 2907.99,
+    "z": -837.28,
+    "streetA": "Rue Omar Bnou Khattab",
+    "streetB": "Rue Omar Bnou Khattab"
+   },
+   {
+    "edgeA": 1566,
+    "edgeB": 1570,
+    "beforeHw": [
+     4,
+     2.73
+    ],
+    "afterHw": [
+     3.26,
+     2.35
+    ],
+    "x": 2928.48,
+    "z": -911.18,
+    "streetA": "Rue Omar Bnou Khattab",
+    "streetB": "Rue Omar Bnou Khattab"
+   },
+   {
+    "edgeA": 1582,
+    "edgeB": 2994,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.33,
+     3.33
+    ],
+    "x": 3903.62,
+    "z": -758.4,
+    "streetA": "Avenue Idriss Premier",
+    "streetB": "Avenue Idriss Premier"
+   },
+   {
+    "edgeA": 1583,
+    "edgeB": 2994,
+    "beforeHw": [
+     4.2,
+     3.33
+    ],
+    "afterHw": [
+     3.57,
+     2.83
+    ],
+    "x": 3732.5,
+    "z": -760.16,
+    "streetA": "Avenue Idriss Premier",
+    "streetB": "Avenue Idriss Premier"
+   },
+   {
+    "edgeA": 1586,
+    "edgeB": 5536,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.4,
+     3.4
+    ],
+    "x": 3362.21,
+    "z": -1541.78,
+    "streetA": "Avenue Yousef Bnou Tachafine",
+    "streetB": "Avenue Yousef Bnou Tachafine"
+   },
+   {
+    "edgeA": 1587,
+    "edgeB": 5535,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.56,
+     3.56
+    ],
+    "x": 3369.49,
+    "z": -1454.43,
+    "streetA": "Avenue Yousef Bnou Tachafine",
+    "streetB": "Avenue Yousef Bnou Tachafine"
+   },
+   {
+    "edgeA": 1631,
+    "edgeB": 1640,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.52,
+     3.52
+    ],
+    "x": 4221.85,
+    "z": -774.91,
+    "streetA": "Rue Abi Jarir Tabari",
+    "streetB": "Rue Abi Jarir Tabari"
+   },
+   {
+    "edgeA": 1711,
+    "edgeB": 2814,
+    "beforeHw": [
+     5.6,
+     5.6
+    ],
+    "afterHw": [
+     3.6,
+     3.6
+    ],
+    "x": 5570.77,
+    "z": -1277.24,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1713,
+    "edgeB": 2432,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.51,
+     3.51
+    ],
+    "x": 5280.93,
+    "z": -1101.94,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1715,
+    "edgeB": 2433,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.23,
+     3.23
+    ],
+    "x": 5007.79,
+    "z": -1078.91,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 1730,
+    "edgeB": 2195,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.55,
+     5.91
+    ],
+    "x": -1262.36,
+    "z": 614.04,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 1730,
+    "edgeB": 2195,
+    "beforeHw": [
+     3.55,
+     5.91
+    ],
+    "afterHw": [
+     3.05,
+     5.08
+    ],
+    "x": -1262.36,
+    "z": 614.04,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 1749,
+    "edgeB": 5184,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.59,
+     3.59
+    ],
+    "x": 1588.79,
+    "z": -2098.54,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 1756,
+    "edgeB": 4008,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     2.92,
+     2.92
+    ],
+    "x": 1832.48,
+    "z": -1486.77,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 1757,
+    "edgeB": 4007,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.15,
+     3.15
+    ],
+    "x": 1796.02,
+    "z": -1612.35,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 1757,
+    "edgeB": 4007,
+    "beforeHw": [
+     3.15,
+     3.15
+    ],
+    "afterHw": [
+     2.53,
+     2.53
+    ],
+    "x": 1796.02,
+    "z": -1612.35,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 2062,
+    "edgeB": 5197,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.79,
+     6.31
+    ],
+    "x": -1692.42,
+    "z": -743.6,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2062,
+    "edgeB": 5197,
+    "beforeHw": [
+     3.79,
+     6.31
+    ],
+    "afterHw": [
+     2.83,
+     4.71
+    ],
+    "x": -1692.42,
+    "z": -743.6,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2062,
+    "edgeB": 5197,
+    "beforeHw": [
+     2.83,
+     4.71
+    ],
+    "afterHw": [
+     2.39,
+     3.98
+    ],
+    "x": -1692.42,
+    "z": -743.6,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2063,
+    "edgeB": 5196,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.14,
+     5.24
+    ],
+    "x": -1718.16,
+    "z": -637.16,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2064,
+    "edgeB": 5195,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.29,
+     5.48
+    ],
+    "x": -1716.55,
+    "z": -598.23,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2064,
+    "edgeB": 5195,
+    "beforeHw": [
+     3.29,
+     5.48
+    ],
+    "afterHw": [
+     2.87,
+     4.78
+    ],
+    "x": -1716.55,
+    "z": -598.23,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2065,
+    "edgeB": 5194,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     2.37,
+     3.95
+    ],
+    "x": -1712.29,
+    "z": -310.15,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2066,
+    "edgeB": 5247,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     2.63,
+     4.39
+    ],
+    "x": -1543.91,
+    "z": -50.38,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2067,
+    "edgeB": 5295,
+    "beforeHw": [
+     7,
+     3.6
+    ],
+    "afterHw": [
+     5.35,
+     2.75
+    ],
+    "x": 1328.95,
+    "z": -3315.36,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 2067,
+    "edgeB": 5295,
+    "beforeHw": [
+     5.35,
+     2.75
+    ],
+    "afterHw": [
+     4.46,
+     2.35
+    ],
+    "x": 1328.95,
+    "z": -3315.36,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 2069,
+    "edgeB": 2072,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     2.78,
+     2.78
+    ],
+    "x": 456.09,
+    "z": -2455.38,
+    "streetA": "Rue Banafsay",
+    "streetB": "Rue Banafsay"
+   },
+   {
+    "edgeA": 2394,
+    "edgeB": 5298,
+    "beforeHw": [
+     7,
+     3.6
+    ],
+    "afterHw": [
+     5.47,
+     2.81
+    ],
+    "x": 2616.81,
+    "z": -2748.29,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 2394,
+    "edgeB": 5298,
+    "beforeHw": [
+     5.47,
+     2.81
+    ],
+    "afterHw": [
+     4.7,
+     2.41
+    ],
+    "x": 2616.81,
+    "z": -2748.29,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 2471,
+    "edgeB": 3247,
+    "beforeHw": [
+     6,
+     4.2
+    ],
+    "afterHw": [
+     5.24,
+     3.67
+    ],
+    "x": 633.38,
+    "z": 1297.57,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 2471,
+    "edgeB": 3247,
+    "beforeHw": [
+     5.24,
+     3.67
+    ],
+    "afterHw": [
+     4.41,
+     3.09
+    ],
+    "x": 633.38,
+    "z": 1297.57,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 2474,
+    "edgeB": 2870,
+    "beforeHw": [
+     6,
+     6
+    ],
+    "afterHw": [
+     5.38,
+     5.38
+    ],
+    "x": 3350.29,
+    "z": -666.32,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": "Avenue Ludwig Van Beethoven"
+   },
+   {
+    "edgeA": 2474,
+    "edgeB": 2981,
+    "beforeHw": [
+     5.38,
+     3.6
+    ],
+    "afterHw": [
+     3.62,
+     2.42
+    ],
+    "x": 3350.29,
+    "z": -666.32,
+    "streetA": "Avenue Ludwig Van Beethoven",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2479,
+    "edgeB": 3195,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.41,
+     3.41
+    ],
+    "x": 2524.57,
+    "z": -193.31,
+    "streetA": "Avenue Raimundo Lulio",
+    "streetB": "Avenue Raimundo Lulio"
+   },
+   {
+    "edgeA": 2505,
+    "edgeB": 2511,
+    "beforeHw": [
+     10.5,
+     10.5
+    ],
+    "afterHw": [
+     7.81,
+     7.81
+    ],
+    "x": 3339.27,
+    "z": -547.08,
+    "streetA": "Place de la Ligue Arabe",
+    "streetB": "Place de la Ligue Arabe"
+   },
+   {
+    "edgeA": 2506,
+    "edgeB": 4345,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     2.73,
+     4.55
+    ],
+    "x": 2143.5,
+    "z": -1761.75,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 2506,
+    "edgeB": 4345,
+    "beforeHw": [
+     2.73,
+     4.55
+    ],
+    "afterHw": [
+     2.35,
+     3.27
+    ],
+    "x": 2143.5,
+    "z": -1761.75,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 2507,
+    "edgeB": 5490,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     2.6,
+     2.6
+    ],
+    "x": 2260.61,
+    "z": -1742.98,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 2530,
+    "edgeB": 2729,
+    "beforeHw": [
+     10.5,
+     10.5
+    ],
+    "afterHw": [
+     7.12,
+     7.12
+    ],
+    "x": 3334.15,
+    "z": -557.83,
+    "streetA": "Place de la Ligue Arabe",
+    "streetB": "Place de la Ligue Arabe"
+   },
+   {
+    "edgeA": 2600,
+    "edgeB": 5104,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.33,
+     3.33
+    ],
+    "x": 2835.05,
+    "z": -600.93,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 2601,
+    "edgeB": 3053,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.43,
+     3.43
+    ],
+    "x": 2973.53,
+    "z": -581.04,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 2658,
+    "edgeB": 2692,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.68,
+     2.68
+    ],
+    "x": 2192.43,
+    "z": -159.44,
+    "streetA": "Avenue Moulay Abdelaziz",
+    "streetB": "Avenue Moulay Abdelaziz"
+   },
+   {
+    "edgeA": 2661,
+    "edgeB": 2689,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.5,
+     2.5
+    ],
+    "x": 1776.38,
+    "z": 361.78,
+    "streetA": "Avenue Moulay Abdelaziz",
+    "streetB": "Avenue Moulay Abdelaziz"
+   },
+   {
+    "edgeA": 2661,
+    "edgeB": 2689,
+    "beforeHw": [
+     2.5,
+     2.5
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 1776.38,
+    "z": 361.78,
+    "streetA": "Avenue Moulay Abdelaziz",
+    "streetB": "Avenue Moulay Abdelaziz"
+   },
+   {
+    "edgeA": 2711,
+    "edgeB": 3135,
+    "beforeHw": [
+     6,
+     4.2
+    ],
+    "afterHw": [
+     4.37,
+     3.06
+    ],
+    "x": 1362.89,
+    "z": 647.48,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 2711,
+    "edgeB": 3135,
+    "beforeHw": [
+     4.37,
+     3.06
+    ],
+    "afterHw": [
+     3.56,
+     2.49
+    ],
+    "x": 1362.89,
+    "z": 647.48,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 2732,
+    "edgeB": 2733,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.54,
+     3.54
+    ],
+    "x": 4186.87,
+    "z": -893.47,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2769,
+    "edgeB": 4851,
+    "beforeHw": [
+     4.2,
+     6
+    ],
+    "afterHw": [
+     3.73,
+     5.33
+    ],
+    "x": 115.44,
+    "z": 240.75,
+    "streetA": "",
+    "streetB": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edgeA": 2790,
+    "edgeB": 4732,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     3.01,
+     3.01
+    ],
+    "x": 1540.87,
+    "z": -2157.12,
+    "streetA": "Rue Sidi Bourqia",
+    "streetB": "Rue Sidi Bourqia"
+   },
+   {
+    "edgeA": 2791,
+    "edgeB": 4731,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 1513.39,
+    "z": -2164.23,
+    "streetA": "Rue Sidi Bourqia",
+    "streetB": "Rue Sidi Bourqia"
+   },
+   {
+    "edgeA": 2796,
+    "edgeB": 2815,
+    "beforeHw": [
+     5.6,
+     5.6
+    ],
+    "afterHw": [
+     5.04,
+     5.04
+    ],
+    "x": 5919,
+    "z": -1496.73,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 2797,
+    "edgeB": 2815,
+    "beforeHw": [
+     5.6,
+     5.04
+    ],
+    "afterHw": [
+     5.01,
+     4.51
+    ],
+    "x": 6044.86,
+    "z": -1584.1,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 2797,
+    "edgeB": 2815,
+    "beforeHw": [
+     5.01,
+     4.51
+    ],
+    "afterHw": [
+     4.21,
+     3.79
+    ],
+    "x": 6044.86,
+    "z": -1584.1,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 2798,
+    "edgeB": 2815,
+    "beforeHw": [
+     5.6,
+     3.79
+    ],
+    "afterHw": [
+     4.85,
+     3.28
+    ],
+    "x": 6195.56,
+    "z": -1683.7,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 2846,
+    "edgeB": 5303,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.29,
+     3.29
+    ],
+    "x": 3479.6,
+    "z": -1203.24,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2846,
+    "edgeB": 5303,
+    "beforeHw": [
+     3.29,
+     3.29
+    ],
+    "afterHw": [
+     2.76,
+     2.76
+    ],
+    "x": 3479.6,
+    "z": -1203.24,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2869,
+    "edgeB": 4661,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.35,
+     3.35
+    ],
+    "x": 3170.64,
+    "z": -450.77,
+    "streetA": "Avenue Moulay Ismail شارع مولاي إسماعيل",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2884,
+    "edgeB": 4967,
+    "beforeHw": [
+     5.6,
+     5
+    ],
+    "afterHw": [
+     4.35,
+     3.89
+    ],
+    "x": 1615.07,
+    "z": -1077.71,
+    "streetA": "Avenue Haroun Errachid",
+    "streetB": "Avenue Ibn Khaldoun شارع ابن خلدون"
+   },
+   {
+    "edgeA": 2947,
+    "edgeB": 5337,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.86,
+     2.91
+    ],
+    "x": 1915.26,
+    "z": -1806.98,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 2947,
+    "edgeB": 5337,
+    "beforeHw": [
+     4.86,
+     2.91
+    ],
+    "afterHw": [
+     3.36,
+     2.35
+    ],
+    "x": 1915.26,
+    "z": -1806.98,
+    "streetA": "Avenue Belgique شارع بلجيكا",
+    "streetB": "Avenue Belgique شارع بلجيكا"
+   },
+   {
+    "edgeA": 2957,
+    "edgeB": 4654,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.82,
+     2.82
+    ],
+    "x": 540.19,
+    "z": -2404.14,
+    "streetA": "Rue Imam Mouslim زنقة الإمام مسلم",
+    "streetB": "Rue Imam Mouslim زنقة الإمام مسلم"
+   },
+   {
+    "edgeA": 2957,
+    "edgeB": 4654,
+    "beforeHw": [
+     2.82,
+     2.82
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 540.19,
+    "z": -2404.14,
+    "streetA": "Rue Imam Mouslim زنقة الإمام مسلم",
+    "streetB": "Rue Imam Mouslim زنقة الإمام مسلم"
+   },
+   {
+    "edgeA": 2969,
+    "edgeB": 5467,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     5.48,
+     3.29
+    ],
+    "x": 2911.23,
+    "z": -1504.69,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2969,
+    "edgeB": 5467,
+    "beforeHw": [
+     5.48,
+     3.29
+    ],
+    "afterHw": [
+     4.24,
+     2.55
+    ],
+    "x": 2911.23,
+    "z": -1504.69,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2969,
+    "edgeB": 5467,
+    "beforeHw": [
+     4.24,
+     2.55
+    ],
+    "afterHw": [
+     3.24,
+     2.35
+    ],
+    "x": 2911.23,
+    "z": -1504.69,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2970,
+    "edgeB": 5309,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.64,
+     2.78
+    ],
+    "x": 2930.99,
+    "z": -1483.9,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2971,
+    "edgeB": 5308,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     5.29,
+     3.17
+    ],
+    "x": 2965.51,
+    "z": -1450.75,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2971,
+    "edgeB": 5308,
+    "beforeHw": [
+     5.29,
+     3.17
+    ],
+    "afterHw": [
+     4.19,
+     2.51
+    ],
+    "x": 2965.51,
+    "z": -1450.75,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2972,
+    "edgeB": 5307,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.74,
+     2.84
+    ],
+    "x": 3023.63,
+    "z": -1409.5,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2972,
+    "edgeB": 5307,
+    "beforeHw": [
+     4.74,
+     2.84
+    ],
+    "afterHw": [
+     4.01,
+     2.4
+    ],
+    "x": 3023.63,
+    "z": -1409.5,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2973,
+    "edgeB": 5306,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.65,
+     2.79
+    ],
+    "x": 3102.01,
+    "z": -1368.52,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2973,
+    "edgeB": 5306,
+    "beforeHw": [
+     4.65,
+     2.79
+    ],
+    "afterHw": [
+     3.72,
+     2.35
+    ],
+    "x": 3102.01,
+    "z": -1368.52,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2974,
+    "edgeB": 5305,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.89,
+     2.93
+    ],
+    "x": 3183.48,
+    "z": -1331.76,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2974,
+    "edgeB": 5305,
+    "beforeHw": [
+     4.89,
+     2.93
+    ],
+    "afterHw": [
+     4.14,
+     2.48
+    ],
+    "x": 3183.48,
+    "z": -1331.76,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2975,
+    "edgeB": 5304,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     6.17,
+     3.7
+    ],
+    "x": 3250.39,
+    "z": -1303.21,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2975,
+    "edgeB": 5304,
+    "beforeHw": [
+     6.17,
+     3.7
+    ],
+    "afterHw": [
+     4.63,
+     2.78
+    ],
+    "x": 3250.39,
+    "z": -1303.21,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2976,
+    "edgeB": 5304,
+    "beforeHw": [
+     7,
+     2.78
+    ],
+    "afterHw": [
+     4.5,
+     2.35
+    ],
+    "x": 3330.14,
+    "z": -1267.93,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 2982,
+    "edgeB": 2984,
+    "beforeHw": [
+     7.5,
+     7.5
+    ],
+    "afterHw": [
+     6.26,
+     6.26
+    ],
+    "x": 3856.81,
+    "z": 90.96,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 2982,
+    "edgeB": 5426,
+    "beforeHw": [
+     6.26,
+     5
+    ],
+    "afterHw": [
+     4.77,
+     3.81
+    ],
+    "x": 3856.81,
+    "z": 90.96,
+    "streetA": "",
+    "streetB": "Avenue Allal El Fassi شارع علال الفاسي"
+   },
+   {
+    "edgeA": 2993,
+    "edgeB": 4921,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.42,
+     3.42
+    ],
+    "x": 3701.47,
+    "z": -734.9,
+    "streetA": "Avenue Idriss Premier",
+    "streetB": "Avenue Idriss Premier"
+   },
+   {
+    "edgeA": 3003,
+    "edgeB": 5417,
+    "beforeHw": [
+     7,
+     4.2
+    ],
+    "afterHw": [
+     4.06,
+     2.43
+    ],
+    "x": 3391.6,
+    "z": -1242.05,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 3014,
+    "edgeB": 4624,
+    "beforeHw": [
+     6,
+     6
+    ],
+    "afterHw": [
+     5.27,
+     5.27
+    ],
+    "x": 4158.33,
+    "z": 544.48,
+    "streetA": "Route de Tétouan",
+    "streetB": "Route de Tétouan"
+   },
+   {
+    "edgeA": 3052,
+    "edgeB": 3055,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.53,
+     3.53
+    ],
+    "x": 3070.57,
+    "z": -575.77,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 3191,
+    "edgeB": 3243,
+    "beforeHw": [
+     6,
+     6
+    ],
+    "afterHw": [
+     5.19,
+     5.19
+    ],
+    "x": 372.78,
+    "z": 1645.9,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 3191,
+    "edgeB": 3243,
+    "beforeHw": [
+     5.19,
+     5.19
+    ],
+    "afterHw": [
+     4.14,
+     4.14
+    ],
+    "x": 372.78,
+    "z": 1645.9,
+    "streetA": "Avenue des Forces Armées Royales شارع الجيش الملكي",
+    "streetB": "Avenue des Forces Armées Royales شارع الجيش الملكي"
+   },
+   {
+    "edgeA": 3259,
+    "edgeB": 4952,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.27,
+     3.27
+    ],
+    "x": -982.42,
+    "z": 1270.56,
+    "streetA": "Boulevard Moulay Rachid شارع مولاي رشيد",
+    "streetB": ""
+   },
+   {
+    "edgeA": 3261,
+    "edgeB": 4851,
+    "beforeHw": [
+     6,
+     5.33
+    ],
+    "afterHw": [
+     5.02,
+     4.46
+    ],
+    "x": -228.88,
+    "z": 605.25,
+    "streetA": "Boulevard Moulay Rachid شارع مولاي رشيد",
+    "streetB": "Boulevard Moulay Rachid شارع مولاي رشيد"
+   },
+   {
+    "edgeA": 3277,
+    "edgeB": 5281,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     2.47,
+     4.12
+    ],
+    "x": 1403.16,
+    "z": -1676.56,
+    "streetA": "",
+    "streetB": "Avenue Habib Bourguiba"
+   },
+   {
+    "edgeA": 4114,
+    "edgeB": 4931,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.55,
+     3.55
+    ],
+    "x": 4334.3,
+    "z": 937.2,
+    "streetA": "",
+    "streetB": "Route de Tétouan"
+   },
+   {
+    "edgeA": 4601,
+    "edgeB": 4998,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.64,
+     3.64
+    ],
+    "x": 3733.83,
+    "z": 2043.05,
+    "streetA": "Avenue Al Quds شارع القدس",
+    "streetB": "Avenue Al Quds شارع القدس"
+   },
+   {
+    "edgeA": 4639,
+    "edgeB": 4640,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.96,
+     2.96
+    ],
+    "x": 2227,
+    "z": -834.78,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 4639,
+    "edgeB": 4640,
+    "beforeHw": [
+     2.96,
+     2.96
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 2227,
+    "z": -834.78,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 4641,
+    "edgeB": 4730,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 2381.89,
+    "z": -718.81,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 4670,
+    "edgeB": 5300,
+    "beforeHw": [
+     7,
+     3.6
+    ],
+    "afterHw": [
+     5.31,
+     2.73
+    ],
+    "x": 2873.83,
+    "z": -2645.97,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 4670,
+    "edgeB": 5300,
+    "beforeHw": [
+     5.31,
+     2.73
+    ],
+    "afterHw": [
+     4.5,
+     2.35
+    ],
+    "x": 2873.83,
+    "z": -2645.97,
+    "streetA": "La Corniche الكرنيش",
+    "streetB": "La Corniche الكرنيش"
+   },
+   {
+    "edgeA": 4679,
+    "edgeB": 4684,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.83,
+     2.83
+    ],
+    "x": 1612.76,
+    "z": 849.98,
+    "streetA": "Rue Martyre Abdelhadi Tayeb",
+    "streetB": "Rue Martyre Abdelhadi Tayeb"
+   },
+   {
+    "edgeA": 4679,
+    "edgeB": 4684,
+    "beforeHw": [
+     2.83,
+     2.83
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 1612.76,
+    "z": 849.98,
+    "streetA": "Rue Martyre Abdelhadi Tayeb",
+    "streetB": "Rue Martyre Abdelhadi Tayeb"
+   },
+   {
+    "edgeA": 4680,
+    "edgeB": 4683,
+    "beforeHw": [
+     3.6,
+     3.6
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 1554.23,
+    "z": 828.55,
+    "streetA": "Rue Martyre Abdelhadi Tayeb",
+    "streetB": "Rue Martyre Abdelhadi Tayeb"
+   },
+   {
+    "edgeA": 4770,
+    "edgeB": 5138,
+    "beforeHw": [
+     3.6,
+     5
+    ],
+    "afterHw": [
+     2.83,
+     3.93
+    ],
+    "x": 738.95,
+    "z": -1525.6,
+    "streetA": "Route California",
+    "streetB": ""
+   },
+   {
+    "edgeA": 4843,
+    "edgeB": 4844,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.51,
+     3.51
+    ],
+    "x": 2694.46,
+    "z": -628.36,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 4843,
+    "edgeB": 4844,
+    "beforeHw": [
+     3.51,
+     3.51
+    ],
+    "afterHw": [
+     2.54,
+     2.54
+    ],
+    "x": 2694.46,
+    "z": -628.36,
+    "streetA": "شارع مولاي يوسف Boulevard Moulay Youssef",
+    "streetB": "شارع مولاي يوسف Boulevard Moulay Youssef"
+   },
+   {
+    "edgeA": 4891,
+    "edgeB": 4973,
+    "beforeHw": [
+     4.2,
+     3.6
+    ],
+    "afterHw": [
+     2.74,
+     2.35
+    ],
+    "x": 3825.78,
+    "z": 975.67,
+    "streetA": "",
+    "streetB": "Rue 82"
+   },
+   {
+    "edgeA": 4921,
+    "edgeB": 5571,
+    "beforeHw": [
+     3.42,
+     4.2
+    ],
+    "afterHw": [
+     2.68,
+     3.29
+    ],
+    "x": 3660.53,
+    "z": -719.24,
+    "streetA": "Avenue Idriss Premier",
+    "streetB": "Avenue Idriss Premier"
+   },
+   {
+    "edgeA": 4928,
+    "edgeB": 4937,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.67,
+     3.67
+    ],
+    "x": 4397.85,
+    "z": 1002.87,
+    "streetA": "",
+    "streetB": "Route de Tétouan"
+   },
+   {
+    "edgeA": 4964,
+    "edgeB": 5103,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     2.98,
+     4.97
+    ],
+    "x": 2881.94,
+    "z": -1541.92,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 4964,
+    "edgeB": 5103,
+    "beforeHw": [
+     2.98,
+     4.97
+    ],
+    "afterHw": [
+     2.35,
+     3.58
+    ],
+    "x": 2881.94,
+    "z": -1541.92,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 4965,
+    "edgeB": 5101,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.09,
+     5.15
+    ],
+    "x": 2849.69,
+    "z": -1599.22,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 4965,
+    "edgeB": 5101,
+    "beforeHw": [
+     3.09,
+     5.15
+    ],
+    "afterHw": [
+     2.35,
+     3.83
+    ],
+    "x": 2849.69,
+    "z": -1599.22,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 4965,
+    "edgeB": 5102,
+    "beforeHw": [
+     2.35,
+     7
+    ],
+    "afterHw": [
+     2.35,
+     4.58
+    ],
+    "x": 2849.69,
+    "z": -1599.22,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 4966,
+    "edgeB": 5422,
+    "beforeHw": [
+     4.2,
+     5.6
+    ],
+    "afterHw": [
+     3.61,
+     4.82
+    ],
+    "x": 2758.54,
+    "z": -1669.54,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Pasteur"
+   },
+   {
+    "edgeA": 4966,
+    "edgeB": 5422,
+    "beforeHw": [
+     3.61,
+     4.82
+    ],
+    "afterHw": [
+     2.47,
+     3.3
+    ],
+    "x": 2758.54,
+    "z": -1669.54,
+    "streetA": "Boulevard Mohamed V شارع محمد الخامس",
+    "streetB": "Boulevard Pasteur"
+   },
+   {
+    "edgeA": 4980,
+    "edgeB": 4982,
+    "beforeHw": [
+     5.6,
+     5.6
+    ],
+    "afterHw": [
+     4.23,
+     4.23
+    ],
+    "x": 3460.23,
+    "z": 727.32,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 4996,
+    "edgeB": 5098,
+    "beforeHw": [
+     4.2,
+     7
+    ],
+    "afterHw": [
+     3.09,
+     5.15
+    ],
+    "x": 3708.78,
+    "z": 1731.43,
+    "streetA": "Avenue Al Quds شارع القدس",
+    "streetB": "Avenue Al Quds شارع القدس"
+   },
+   {
+    "edgeA": 5005,
+    "edgeB": 5007,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.26,
+     3.26
+    ],
+    "x": 4447.91,
+    "z": -1144.14,
+    "streetA": "Avenue Mohammed VI شارع محمد السادس",
+    "streetB": "Avenue Mohammed VI شارع محمد السادس"
+   },
+   {
+    "edgeA": 5123,
+    "edgeB": 5162,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     2.87,
+     2.87
+    ],
+    "x": 2815.82,
+    "z": 1866.07,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 5260,
+    "edgeB": 5262,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.34,
+     3.34
+    ],
+    "x": 1197.91,
+    "z": -17.21,
+    "streetA": "Boulevard Faisal Ibn Abdelaziz",
+    "streetB": "Boulevard Faisal Ibn Abdelaziz"
+   },
+   {
+    "edgeA": 5332,
+    "edgeB": 5333,
+    "beforeHw": [
+     4.2,
+     4.2
+    ],
+    "afterHw": [
+     3.54,
+     3.54
+    ],
+    "x": 1525.32,
+    "z": -2147.52,
+    "streetA": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله",
+    "streetB": "Avenue Sidi Mohamed Ben Abdellah شارع سيدي محمد بن عبد الله"
+   },
+   {
+    "edgeA": 5382,
+    "edgeB": 5386,
+    "beforeHw": [
+     6.5,
+     7
+    ],
+    "afterHw": [
+     5.52,
+     5.94
+    ],
+    "x": 5881.92,
+    "z": -846.26,
+    "streetA": "",
+    "streetB": ""
+   },
+   {
+    "edgeA": 5420,
+    "edgeB": 5476,
+    "beforeHw": [
+     3.6,
+     4.2
+    ],
+    "afterHw": [
+     2.59,
+     3.02
+    ],
+    "x": 2520.01,
+    "z": -1762.44,
+    "streetA": "Boulevard Pasteur",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 5420,
+    "edgeB": 5476,
+    "beforeHw": [
+     2.59,
+     3.02
+    ],
+    "afterHw": [
+     2.35,
+     2.35
+    ],
+    "x": 2520.01,
+    "z": -1762.44,
+    "streetA": "Boulevard Pasteur",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 5421,
+    "edgeB": 5476,
+    "beforeHw": [
+     5.6,
+     2.35
+    ],
+    "afterHw": [
+     3.94,
+     2.35
+    ],
+    "x": 2627.83,
+    "z": -1717.95,
+    "streetA": "Boulevard Pasteur",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   },
+   {
+    "edgeA": 5421,
+    "edgeB": 5476,
+    "beforeHw": [
+     3.94,
+     2.35
+    ],
+    "afterHw": [
+     2.66,
+     2.35
+    ],
+    "x": 2627.83,
+    "z": -1717.95,
+    "streetA": "Boulevard Pasteur",
+    "streetB": "Boulevard Mohamed V شارع محمد الخامس"
+   }
+  ],
+  "pavementSamplesAdjusted": 0,
+  "groundCellsLowered": 90225
+ }
+}

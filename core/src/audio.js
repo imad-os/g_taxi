@@ -21,7 +21,17 @@ export class Sound {
         this.noise = nb;
         this.worklet = null;
         if (c.audioWorklet) this.worklet = c.audioWorklet.addModule('assets/engine-worklet.js?v=' + VERSION).then(() => true).catch(() => false);
-        for (const n of SFX) fetch('assets/sfx/' + n + '.ogg?v=' + VERSION).then(r => r.arrayBuffer()).then(b => c.decodeAudioData(b)).then(b => { this.buf[n] = b; }).catch(() => {});
+        (async () => {
+            for (const n of SFX) {
+                try {
+                    const r = await fetch('assets/sfx/' + n + '.ogg?v=' + VERSION);
+                    if (!r.ok || !this.ctx) continue;
+                    const b = await r.arrayBuffer();
+                    if (!this.ctx) break;
+                    this.buf[n] = await c.decodeAudioData(b);
+                } catch {}
+            }
+        })();
         this.playMusic('alpha-dance');
     }
     noiseSrc() { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; return s; }

@@ -72,9 +72,21 @@ export class CityWorld {
         this.chunks = new Map();     // key -> { segs: [], blds: [], lights: [], st: [], built: null }
         const key = (x, z) => Math.floor(x / CS) * 1000 + Math.floor(z / CS) + 500500;
         this.key = key;
-        const get = (k) => { let c = this.chunks.get(k); if (!c) this.chunks.set(k, c = { k, segs: [], blds: [], heads: [], st: [], jn: [], built: null }); return c; };
+        const get = (k) => { let c = this.chunks.get(k); if (!c) this.chunks.set(k, c = { k, segs: [], blds: [], heads: [], st: [], jn: [], jn2: [], built: null }); return c; };
         for (let i = 0; i < net.n - 1; i++) if (net.sE[i + 1] === net.sE[i]) get(key((net.px[i] + net.px[i + 1]) / 2, (net.pz[i] + net.pz[i + 1]) / 2)).segs.push(i);
-        for (let j = 0; j < net.nj; j++) if (net.jEdges[j].length >= 3) get(key(net.jx[j], net.jz[j])).jn.push(j);
+        for (let j = 0; j < net.nj; j++) {
+            const je = net.jEdges[j];
+            if (je.length >= 3) get(key(net.jx[j], net.jz[j])).jn.push(j);
+            else if (je.length === 2) {
+                const dirOf = e => {
+                    const o = net.eOff[e], n = net.eN[e], atA = net.eA[e] === j;
+                    const idx = atA ? o : o + Math.max(0, n - 2);
+                    return atA ? [net.tx[idx], net.tz[idx]] : [-net.tx[idx], -net.tz[idx]];
+                };
+                const [a0x, a0z] = dirOf(je[0]), [a1x, a1z] = dirOf(je[1]);
+                if (a0x * a1x + a0z * a1z > -0.97) get(key(net.jx[j], net.jz[j])).jn2.push(j);
+            }
+        }
         const B = net.bld;
         for (let o = 0; o < B.length;) { const n = B[o]; get(key(B[o + 3], B[o + 4])).blds.push(o); o += 3 + n * 2; }
         for (const s of net.stations) { const i = net.eOff[s.e] + s.k; get(key(net.px[i], net.pz[i])).st.push(s); }
@@ -179,7 +191,7 @@ export class CityWorld {
     }
     emptyChunk(i, j) {   // squares with no road still get their ground
         const k = i * 1000 + j + 500500;
-        const c = { k, segs: [], blds: [], heads: [], st: [], jn: [], built: null };
+        const c = { k, segs: [], blds: [], heads: [], st: [], jn: [], jn2: [], built: null };
         this.chunks.set(k, c); return c;
     }
 
@@ -199,11 +211,21 @@ export class CityWorld {
             this.street(road, DS, detail, core, segs[r0], segs[k2 - 1] + 1, rnd);
             r0 = k2;
         }
-        // junction plazas: plain asphalt discs
+        // junction plazas: plain asphalt discs (3+ street hubs and angled 2-edge bends)
         for (const j of c.jn) {
             const r = net.jr[j] + 0.4, y = net.jy[j] + 0.012, N = 18, P = net.jPlane[j];
             const yAt = (x, z) => P ? net.planeY(j, x, z) + 0.012 : y;   // the junction's own plane (the car drives on it)
             const base = road.count;
+            road.vert(net.jx[j], yAt(net.jx[j], net.jz[j]), net.jz[j], 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1);
+            for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2, vx = net.jx[j] + Math.cos(t) * r, vz = net.jz[j] + Math.sin(t) * r; road.vert(vx, yAt(vx, vz), vz, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
+            for (let a = 0; a < N; a++) road.i.push(base, base + 2 + a, base + 1 + a);
+        }
+        const gq = this.gq || (this.gq = {});
+        for (const j of c.jn2 || []) {
+            let r = 3.5; for (const e of net.jEdges[j]) if (net.eHw[e] > r) r = net.eHw[e];
+            r += 0.25;
+            const N = 14, base = road.count;
+            const yAt = (x, z) => { net.query(x, z, -1, gq); return (gq.edge >= 0 ? gq.y : net.jy[j]) + 0.006; };
             road.vert(net.jx[j], yAt(net.jx[j], net.jz[j]), net.jz[j], 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1);
             for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2, vx = net.jx[j] + Math.cos(t) * r, vz = net.jz[j] + Math.sin(t) * r; road.vert(vx, yAt(vx, vz), vz, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
             for (let a = 0; a < N; a++) road.i.push(base, base + 2 + a, base + 1 + a);
@@ -215,14 +237,17 @@ export class CityWorld {
             const W = gi1 - gi0 + 1, base = core.count, H = G.h, nx = G.nx;
             const at = (i, j) => H[Math.max(0, Math.min(G.nz - 1, j)) * nx + Math.max(0, Math.min(nx - 1, i))] / 10;
             for (let j = gj0; j <= gj1; j++) for (let i = gi0; i <= gi1; i++) {
-                const h = at(i, j);
+                const vx = G.x0 + i * G.c, vz = G.z0 + j * G.c;
+                let h = at(i, j);
+                net.query(vx, vz, -1, gq);
+                if (gq.edge >= 0 && (Math.abs(gq.d) < gq.hl + PAVE + 4 || gq.junc >= 0)) h = Math.min(h, gq.y - 0.40);
                 const ddx = (at(i + 1, j) - at(i - 1, j)) / (2 * G.c), ddz = (at(i, j + 1) - at(i, j - 1)) / (2 * G.c);
                 const nl = Math.hypot(ddx, 1, ddz), ny = 1 / nl;
                 const nz2 = (Math.sin(i * 0.9) + Math.sin(j * 1.3)) * 0.5;
                 let r, g, b;
                 if (h < 0.5) { r = 196; g = 182; b = 146; } else if (h < 3) { r = 222 + nz2 * 8; g = 206 + nz2 * 8; b = 162; }
                 else if (ny < 0.82) { r = 132 + nz2 * 10; g = 118 + nz2 * 8; b = 96; } else { r = 116 + nz2 * 16; g = 132 + nz2 * 14; b = 76 + nz2 * 6; }
-                core.vert(G.x0 + i * G.c, h, G.z0 + j * G.c, -ddx / nl, ny, -ddz / nl, r, g, b);
+                core.vert(vx, h, vz, -ddx / nl, ny, -ddz / nl, r, g, b);
             }
             for (let j = 0; j < gj1 - gj0; j++) for (let i = 0; i < W - 1; i++) {
                 const a = base + j * W + i;
@@ -308,18 +333,31 @@ export class CityWorld {
             D[0] = hw + pl + (fullL ? VERGE : 0); D[1] = hw + pl; D[2] = hw + Math.min(0.35, pl);
             D[8] = -hw - Math.min(0.35, pr); D[9] = -hw - pr; D[10] = -hw - pr - (fullR ? VERGE : 0);
             const kl = !junc && pl > 0.6 ? 0.15 : 0, kr = !junc && pr > 0.6 ? 0.15 : 0;
+            const VY = new Float64Array(COLS), VX = new Float64Array(COLS), VZ = new Float64Array(COLS);
+            let dropL = 1e9, dropR = 1e9;
             for (let k = 0; k < COLS; k++) {
                 const d = D[k];
+                const vx = x + lx * d, vz = z + lz * d;
+                VX[k] = vx; VZ[k] = vz;
                 const yy = k === 0 ? (fullL ? -0.55 : kl) : k === 10 ? (fullR ? -0.55 : kr) : k === 1 || k === 2 ? kl : k === 8 || k === 9 ? kr : 0;
-                let vy = net.surfY(e, s, x + lx * d, z + lz * d, y) + yy;
-                // asphalt is drawn at the height the wheels get there (net.query: where two streets' asphalt overlaps it
-                // blends them), so overlapping strips are one surface and the taxi does not sink into the higher one;
-                // a pavement or verge reaching onto another street's asphalt (or a junction) goes just under it
-                const q = net.query(x + lx * d, z + lz * d, -1, this.vq || (this.vq = {}));
-                if (k >= 3 && k <= 7) { if (q.edge >= 0 && q.off === 0 && q.junc < 0) vy = q.y; }
-                else if (q.edge >= 0 && q.edge !== e && q.off === 0) vy = Math.min(vy, q.y - 0.04);
-                road.vert(x + lx * d, vy, z + lz * d, 0, 1, 0, 0, 0, 0);
-                DS.push(d, s, hw, fl);
+                let vy = net.surfY(e, s, vx, vz, y) + yy;
+                const q = net.query(vx, vz, -1, this.vq || (this.vq = {}));
+                if (k >= 3 && k <= 7) {
+                    if (q.edge >= 0 && (q.off === 0 || (Math.abs(q.d) <= q.hl + 0.08 && q.junc < 0))) vy = q.y;
+                } else if (q.edge >= 0 && (q.edge !== e || (q.junc >= 0 && net.jEdges[q.junc].length >= 3))) {
+                    if (q.off === 0 || Math.abs(q.d) < q.hl + 1.2 || (q.junc >= 0 && net.jEdges[q.junc].length >= 3)) {
+                        vy = Math.min(vy, q.y - 0.12);
+                        if (k <= 2 && q.y - 0.12 < dropL) dropL = q.y - 0.12;
+                        if (k >= 8 && q.y - 0.12 < dropR) dropR = q.y - 0.12;
+                    }
+                }
+                VY[k] = vy;
+            }
+            if (dropL < 1e8) { for (let k = 0; k <= 2; k++) VY[k] = Math.min(VY[k], dropL); }
+            if (dropR < 1e8) { for (let k = 8; k <= 10; k++) VY[k] = Math.min(VY[k], dropR); }
+            for (let k = 0; k < COLS; k++) {
+                road.vert(VX[k], VY[k], VZ[k], 0, 1, 0, 0, 0, 0);
+                DS.push(D[k], s, hw, fl);
             }
             if (i > i0) {
                 const a = base + (i - i0 - 1) * COLS, b = base + (i - i0) * COLS;

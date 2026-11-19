@@ -12,8 +12,30 @@ export const WALL = 3.25;        // invisible wall at the outer edge of the pave
 
 export class Net {
     static async load(onProgress) {
-        const get = (f, bin) => fetch('assets/city/' + f + '?v=' + VERSION).then(r => { if (!r.ok) throw new Error(f + ' ' + r.status); return bin ? r.arrayBuffer() : r.json(); });
-        const [meta, net, ground, bld, side] = await Promise.all([get('city.json'), get('net.bin', 1), get('ground.bin', 1), get('bld.bin', 1), get('side.bin', 1)]);
+        const wait = (ms) => new Promise(r => setTimeout(r, ms));
+        const get = async (f, bin) => {
+            const url = 'assets/city/' + f + '?v=' + VERSION;
+            for (let attempt = 0; ; attempt++) {
+                const r = await fetch(url);
+                if (r.ok) return bin ? r.arrayBuffer() : r.json();
+                if ((r.status === 429 || r.status >= 500) && attempt < 6) {
+                    const ra = Number(r.headers.get('retry-after'));
+                    const delay = (Number.isFinite(ra) && ra > 0 ? ra * 1000 : 350 * (2 ** attempt)) + Math.random() * 250;
+                    await wait(Math.min(delay, 8000));
+                    continue;
+                }
+                throw new Error(f + ' ' + r.status);
+            }
+        };
+        const meta = await get('city.json');
+        onProgress && onProgress(0.2);
+        const net = await get('net.bin', 1);
+        onProgress && onProgress(0.45);
+        const ground = await get('ground.bin', 1);
+        onProgress && onProgress(0.65);
+        const bld = await get('bld.bin', 1);
+        onProgress && onProgress(0.85);
+        const side = await get('side.bin', 1);
         onProgress && onProgress(1);
         return new Net(meta, net, ground, bld, side);
     }
@@ -58,8 +80,8 @@ export class Net {
             this.eLen[e] = s;
             const ra = this.jr[r[3]], rb = this.jr[r[4]];
             for (let k = 0; k < n; k++) {
-                const i = o + k, si = this.sS[i];
-                if (si < ra + 2) this.sJ[i] = r[3]; else if (s - si < rb + 2) this.sJ[i] = r[4];
+                const i = o + k, si = this.sS[i], da = si - ra, db = s - si - rb;
+                if (da < 2 && da <= db) this.sJ[i] = r[3]; else if (db < 2) this.sJ[i] = r[4];
             }
         }
         this.lights = meta.lights; this.stations = meta.stations; this.names = meta.names; this.areas = meta.areas || [];
@@ -176,6 +198,7 @@ export class Net {
     query(x, z, hint, out) {
         const a = Math.floor((x - this.gx0) / CELL), b = Math.floor((z - this.gz0) / CELL);
         let best = -1, bestE = 1e9, bt = 0, b2 = -1, b2E = 1e9, b2t = 0;
+        let bestRaw = 1e9, b2Raw = 1e9;
         const he = hint >= 0 && hint < this.n ? this.sE[hint] : -1;
         if (a >= 0 && b >= 0 && a < this.gnx && b < this.gnz) {
             const c = b * this.gnx + a, L = this.cellList;
@@ -187,10 +210,11 @@ export class Net {
                 if (t < 0) t = 0; else if (t > 1) t = 1;
                 const qx = ax + sx * t - x, qz = az + sz * t - z;
                 const dist = Math.sqrt(qx * qx + qz * qz);
-                let ed = dist - this.eHw[this.sE[i]];
+                const rawEd = dist - this.eHw[this.sE[i]];
+                let ed = rawEd;
                 if (this.sE[i] === he) ed -= 0.05;
-                if (ed < bestE) { if (best >= 0 && this.sE[best] !== this.sE[i]) { b2 = best; b2E = bestE; b2t = bt; } bestE = ed; best = i; bt = t; }
-                else if (ed < b2E && this.sE[i] !== this.sE[best]) { b2E = ed; b2 = i; b2t = t; }
+                if (ed < bestE) { if (best >= 0 && this.sE[best] !== this.sE[i]) { b2 = best; b2E = bestE; b2t = bt; b2Raw = bestRaw; } bestE = ed; bestRaw = rawEd; best = i; bt = t; }
+                else if (ed < b2E && this.sE[i] !== this.sE[best]) { b2E = ed; b2Raw = rawEd; b2 = i; b2t = t; }
             }
         }
         if (best < 0) {   // nowhere near a road (should not happen inside the walls)
@@ -208,32 +232,43 @@ export class Net {
         let y = this.py[i] + (this.py[i + 1] - this.py[i]) * t;
         const slope = (this.py[i + 1] - this.py[i]) / len;
         let dydd = 0, off = 0;
-        let junc = this.sJ[i];
-        if (junc >= 0) { const jx = x - this.jx[junc], jz = z - this.jz[junc]; if (jx * jx + jz * jz > (this.jr[junc] + 3) ** 2) junc = -1; }
-        if (junc < 0) {   // on the plaza of the junction at either end (drawn flat: no kerb there)
-            const A = this.eA[e], B = this.eB[e];
-            if (this.onPlaza(A, x, z)) junc = A; else if (this.onPlaza(B, x, z)) junc = B;
+        const A = this.eA[e], B = this.eB[e];
+        let junc = -1;
+        const pA = this.onPlaza(A, x, z), pB = this.onPlaza(B, x, z);
+        if (pA && pB) {
+            const dA = Math.hypot(x - this.jx[A], z - this.jz[A]) - this.jr[A];
+            const dB = Math.hypot(x - this.jx[B], z - this.jz[B]) - this.jr[B];
+            junc = dA <= dB ? A : B;
+        } else if (pA) junc = A;
+        else if (pB) junc = B;
+        else {
+            junc = this.sJ[i];
+            if (junc >= 0) { const jx = x - this.jx[junc], jz = z - this.jz[junc]; if (jx * jx + jz * jz > (this.jr[junc] + 3) ** 2) junc = -1; }
         }
+        const inPlaza = junc >= 0 && this.jEdges[junc].length >= 3
+            && Math.hypot(x - this.jx[junc], z - this.jz[junc]) <= this.jr[junc] + 0.35;
         // near a junction: the junction's plane (the same surface the city draws)
-        const sAl = this.sS[i] + t * len, wj = this.blend(e, sAl);
+        const sAl = this.sS[i] + t * len;
+        let wj = this.blend(e, sAl), bj = this._bj;
+        if (inPlaza && this.jPlane[junc]) { wj = 1; bj = junc; }
         let pgx = 0, pgz = 0;
-        if (wj > 0) { const J = this._bj; y += (this.planeY(J, x, z) - y) * wj; pgx = this.jgx[J] * wj; pgz = this.jgz[J] * wj; }
+        if (wj > 0) { y += (this.planeY(bj, x, z) - y) * wj; pgx = this.jgx[bj] * wj; pgz = this.jgz[bj] * wj; }
         // on the asphalt of two streets at once, or of one within MERGE m of another's (carriageways closer than their
         // widths, ways drawn over each other): one surface, weighted by how deep the point is in each, so it has no step
         // where the nearer street changes (the city draws its asphalt at this height too)
         let ov = 0;
-        if (bestE < 0 && b2E < MERGE && b2 >= 0 && junc < 0) {
+        if (bestRaw <= 0.08 && b2Raw < MERGE && b2 >= 0 && (junc < 0 || !this.jPlane[junc])) {
             ov = 1;
             const i2 = b2, e2 = this.sE[i2], l2 = Math.hypot(this.px[i2 + 1] - this.px[i2], this.pz[i2 + 1] - this.pz[i2]) || 1;
             let y2 = this.py[i2] + (this.py[i2 + 1] - this.py[i2]) * b2t;
             const w2 = this.blend(e2, this.sS[i2] + b2t * l2);
             if (w2 > 0) y2 += (this.planeY(this._bj, x, z) - y2) * w2;
-            const a1 = MERGE - bestE, a2 = MERGE - b2E;
+            const a1 = Math.max(0.05, MERGE - bestRaw), a2 = MERGE - b2Raw;
             y += (y2 - y) * a2 / (a1 + a2);
         }
-        const edge = d >= 0 ? d - hw : -d - hw;
+        const edge = bestRaw;
         const pv = d >= 0 ? this.pl[i] + (this.pl[i + 1] - this.pl[i]) * t : this.pr[i] + (this.pr[i + 1] - this.pr[i]) * t;
-        if (edge > 0 && junc < 0) {
+        if (edge > 0 && !inPlaza) {
             off = 1;
             if (pv > 0.6) {   // a kerb only where there is a real pavement
                 const k = edge < 0.4 ? edge / 0.4 : 1;
