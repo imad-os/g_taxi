@@ -3,6 +3,7 @@
 import { I18n } from './i18n.js';
 import { LEVEL_IDS } from './level.js';
 import { ORANGE } from './taxi.js';
+import { BigMap } from './bigmap.js';
 
 const next = (list, v) => list[(list.indexOf(v) + 1) % list.length];
 
@@ -22,6 +23,7 @@ export class UI {
     paint() { this.items.forEach((e, i) => e.classList.toggle('focus', i === this.f)); const f = this.items[this.f]; if (f && f.scrollIntoView) f.scrollIntoView({ block: 'nearest' }); }
     input(a, dev, repeat) {
         if (!this.open) return false;
+        if (this.screen === 'map') return this.mapInput(a, dev, repeat);
         if (a === 'up' || a === 'left') { this.f = (this.f + this.items.length - 1) % this.items.length; this.paint(); this.app.sound.ui('move'); }
         else if (a === 'down' || a === 'right') { this.f = (this.f + 1) % this.items.length; this.paint(); this.app.sound.ui('move'); }
         else if (a === 'confirm' && !repeat) { const fn = this.acts[this.f]; this.app.sound.ui('ok'); if (fn) fn(); }
@@ -82,11 +84,47 @@ ${st ? `<div class="mini">${I18n.t('money')} <b>${Math.round(this.app.saved.mone
         const row = (k, v) => `<div class="st"><span>${I18n.t(k)}</span><b>${v}</b></div>`;
         this.show(`<div class="panel pause"><h2>${I18n.t('paused')}</h2>${this.app.bugMsg ? `<p class="bugmsg">${I18n.line(this.app.bugMsg)}</p>` : ''}
 <div class="stats">${row('money', Math.round(T.money) + ' DH')}${row('rides', s.rides)}${row('earned', Math.round(s.earned) + ' DH')}${row('fines', Math.round(s.fines) + ' DH')}${row('repairs', Math.round(s.repairs) + ' DH')}${row('fuelSpent', Math.round(s.fuel) + ' DH')}${row('km', s.km.toFixed(1))}${row('level', I18n.t('lv_' + this.app.settings.level))}</div>
-<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn${T.fuel < ORANGE ? ' warnbtn' : ''}" data-f>${I18n.t(T.fuelGo ? 'goFuelOff' : 'goFuel')}${T.fuelGo ? '' : ' <b>' + Math.round(T.fuel) + ' / ' + T.tank + ' L</b>'}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
+<div class="btn go" data-f>${I18n.t('resume')}</div><div class="btn${T.fuel < ORANGE ? ' warnbtn' : ''}" data-f>${I18n.t(T.fuelGo ? 'goFuelOff' : 'goFuel')}${T.fuelGo ? '' : ' <b>' + Math.round(T.fuel) + ' / ' + T.tank + ' L</b>'}</div><div class="btn" data-f>${I18n.t('mapT')}</div><div class="btn" data-f>${I18n.t('settings')}</div><div class="btn" data-f>${I18n.t('help')}</div><div class="btn" data-f>${I18n.t('statsT')}</div><div class="btn" data-f>${I18n.t('bugReport')}</div><div class="btn" data-f>${I18n.t('reset')}</div><div class="btn" data-f>${I18n.t('quit')}</div></div>`,
         [() => this.app.resumeShift(), () => { const sh = this.app.shift; T.goFuel(sh.me.veh, sh.qp); this.app.resumeShift(); },
-            () => this.settings(() => this.pause(2)), () => this.controls(() => this.pause(3)),
-            () => this.statsView(T.stats, T.money, () => this.pause(4)), () => this.app.reportBug(),
-            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(6)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
+            () => this.mapView(() => this.pause(2)),
+            () => this.settings(() => this.pause(3)), () => this.controls(() => this.pause(4)),
+            () => this.statsView(T.stats, T.money, () => this.pause(5)), () => this.app.reportBug(),
+            () => this.confirmReset(() => this.app.resetCareer(), () => this.pause(7)), () => this.app.endShift()], () => this.app.resumeShift(), focus);
+    }
+    // the whole city (owner request 2026-11-19): stations, people waiting, the destination and the GPS route to it
+    mapView(back) {
+        this.screen = 'map';
+        const S = this.app.shift, T = S.taxi, net = S.net;
+        const li = (cls, k) => `<span class="lg"><i class="${cls}"></i>${I18n.t(k)}</span>`;
+        this.show(`<div class="panel bigmap"><h2>${I18n.t('mapT')}<span class="small">${I18n.t('mapStations', net.stations.length)}</span></h2>
+<canvas width="1280" height="640"></canvas><p class="minfo"></p>
+<div class="legend">${li('taxi', 'lgTaxi')}${li('ped', 'lgPed')}${li('dest', 'lgDest')}${li('fuel', 'lgFuel')}${li('route', 'lgRoute')}</div>
+<p class="small">${I18n.t('mapHelp')}</p></div>`, [], back, 0);
+        const M = this.map = new BigMap(S, this.root.querySelector('canvas'));
+        const R = M.R, km = R ? (R.route.len / 1000).toFixed(1) : '';
+        this.root.querySelector('.minfo').textContent = M.kind === 'ride' ? I18n.t('mapRide', R.name || '—', km) : M.kind === 'fuel' ? I18n.t('mapFuel', R.name || I18n.t('fuelStation'), km)
+            : M.kind === 'ped' ? I18n.t('mapPed', km) : I18n.t('mapNone');
+        if (T.fuel < ORANGE) this.root.querySelector('.minfo').classList.add('warn');
+        M.draw(this.app.hud.base);
+    }
+    mapInput(a, dev, repeat) {
+        const M = this.map;
+        if (a === 'left') M.move(-1, 0); else if (a === 'right') M.move(1, 0);
+        else if (a === 'up') M.move(0, -1); else if (a === 'down') M.move(0, 1);
+        else if (a === 'confirm' && !repeat) { M.zoom(1); this.app.sound.ui('move'); }
+        else if ((a === 'cancel' || a === 'menu') && !repeat) { this.app.sound.ui('back'); this.closeMap(); }
+        M.draw(this.app.hud.base);
+        return true;
+    }
+    closeMap() { this.map = null; const b = this.back; this.screen = ''; if (b) b(); }
+    // every game tick while the map is open: the controller's stick, R / L zoom, Y back on the taxi, − closes
+    mapTick(dt, inp) {
+        const M = this.map; if (!M) return;
+        const e = inp.edge;
+        if (e.map) { this.closeMap(); return; }
+        if (e.gearUp) M.zoom(1); if (e.gearDown) M.zoom(-1); if (e.camera) M.centre();
+        M.tick(dt, inp.axis(0), inp.axis(1));
+        M.draw(this.app.hud.base);
     }
     // Stats (owner request 2026-11-15): rides, the passengers' stars (average + each recent ride), fines, accidents, money
     statsView(s, money, back) {

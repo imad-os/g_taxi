@@ -57,3 +57,27 @@ check the picture and the trail before changing the map.
 3. Fix the network builder / city mesh, `npm run city` if the data changed, `npm run build`.
 4. Run the bot again with the same seed and compare the counts per kind (a fix must lower them and add none).
 5. Run the usual tests (CLAUDE.md "Browser checks") before pushing.
+
+## Every route, then before / after (owner request 2026-11-19)
+
+```sh
+node tools/roadbot.mjs run --patrol --max-issues 150 --minutes 10   # all junctions: a route to every one (3,984), then
+                                                                     # 3D checks at the worst spots, then free driving
+# fix, npm run build, then the same spots again with today's game:
+node tools/roadbot-after.mjs run bot_log/after                       # after/<id>-<kind>.jpg + report.md (fixed or not)
+```
+
+The committed `bot_log/` keeps only `before/` (the pictures and report of the run) and `after/` (the same spots now). Older
+folders (bot_log_2, bot_log_3) are gone.
+
+What to know before "fixing" a finding:
+- `detour` (patrol `excessive_detour`): the shortest legal drive between two junctions 15-120 m apart is over 10x longer.
+  Since 2026-11-19 it is measured with `RoadBot.junctionRoute` (any street out of the first junction, any street into the
+  second, to the junction itself). The old measure left by the first street out and stopped half way along the first street
+  in, so a two-way street straight between them read as a 10x detour; `tools/fix-city.mjs` then turned 114 real one-way streets
+  two-way (bot_log_3). Those are one-way again. What is left are dual carriageways and one-way streets as they really are:
+  never make a real one-way street two-way to please the bot.
+- `steep`: Rue 6 (#1200, 28 % over 36 m) follows the real terrain; it is kept.
+- `bump` right after the bot jumps somewhere is the car landing (the bot ignores 1.5 s after a jump since 2026-11-19).
+- `dead_end_node` (406): streets that end in OpenStreetMap. 28 of them stop within 4 m of another street's asphalt; some pairs
+  are one street cut by steps or a footway in OSM, not drivable in reality, so they were not joined.

@@ -4,6 +4,7 @@
 import { I18n } from './i18n.js';
 import { FUEL_PRICE, ORANGE } from './taxi.js';
 import { Gauges, turnArrow } from './gauges.js';
+import { routePoints } from './bigmap.js';
 
 const MPP = 5;        // map: metres per pixel of the pre-drawn city
 const el = (cls, parent, tag) => { const e = document.createElement(tag || 'div'); e.className = cls; if (parent) parent.appendChild(e); return e; };
@@ -139,21 +140,9 @@ export class Hud {
         if (R && R.route && R.ped.state === 'in') {
             x.strokeStyle = '#2cff8f'; x.lineWidth = 3.2 / k; x.beginPath();
             // from the taxi along the route: the first street only ahead of the taxi, the last one only up to the stop
-            const E = R.route.edges, sNow = S.qp.edge === (E[0] && E[0][0]) ? S.qp.s : -1;
             x.moveTo(0, 0);
-            let count = 0;
-            for (let r = 0; r < E.length; r++) {
-                const e = E[r][0], dir = E[r][1], o = net.eOff[e], n = net.eN[e];
-                for (let m = 0; m < n; m++) {
-                    const i = o + (dir > 0 ? m : n - 1 - m), si = net.sS[i];
-                    if (r === 0 && sNow >= 0 && (dir > 0 ? si < sNow : si > sNow)) continue;
-                    if (r === E.length - 1 && e === R.e && (dir > 0 ? si > R.s : si < R.s)) break;
-                    x.lineTo((net.px[i] - v.px) / MPP, (net.pz[i] - v.pz) / MPP);
-                    if (++count > 2000) break;
-                }
-            }
+            routePoints(S, R, (wx, wz) => x.lineTo((wx - v.px) / MPP, (wz - v.pz) / MPP));
             const dx = (R.x - v.px) / MPP, dz = (R.z - v.pz) / MPP;
-            x.lineTo(dx, dz);
             x.stroke();
             x.fillStyle = '#2cff8f'; x.beginPath(); x.arc(dx, dz, 5 / k, 0, 7); x.fill();
         }

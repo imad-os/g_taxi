@@ -101,10 +101,21 @@ A petit-taxi simulator on the real streets of Tangier (OpenStreetMap). Its siste
 - **Road bot (owner request 2026-11-14)**: `src/roadbot.js` (dev only, `?dev&bot`) drives by itself and logs road problems (cut routes,
   holes, grass on the asphalt, height mismatches, off-road turns, stuck spots, kinks, bumps) with a picture each.
   **`node tools/roadbot.mjs <out> --minutes 20`** writes report.md / report.json / shots / map.png. How to run it and the fixing loop:
-  **docs/ROADBOT.md**. Out folders are not committed.
+  **docs/ROADBOT.md**. Out folders are not committed (only `bot_log/before` + `bot_log/after`, see 0.7.0).
 
-- **0.4.7 (owner 2026-11-16: gas station directions)**: Pause > **Go fuel up** (`Taxi.goFuel`, toggles) routes to the nearest station (shortest of the 5 closest by `net.route`): green arrows + turn sign + beacon + map line + a "To <name>" box (`taxi.fuelGo`, refreshed every 4 s, ends at the pump). At the pump A refuels (13.4 DH/L from the cash). Stations: `tools/build-city.mjs` snaps OSM `fuel` places (15) and fills gaps so every area is within 1.6 km (17 now). **Orange warning** under `ORANGE` = 10 L: toast + HUD chip + orange gauge arc / FUEL lamp (red under 4 L). Test: `node tests/v046.mjs <folder>`. Pause menu indexes: Resume 0, Go fuel up 1, Settings 2, Controls 3, Stats 4, Report a bug 5, Start over 6, End 7.
+- **0.4.7 (owner 2026-11-16: gas station directions)**: Pause > **Go fuel up** (`Taxi.goFuel`, toggles) routes to the nearest station (shortest of the 5 closest by `net.route`): green arrows + turn sign + beacon + map line + a "To <name>" box (`taxi.fuelGo`, refreshed every 4 s, ends at the pump). At the pump A refuels (13.4 DH/L from the cash). Stations: see 0.7.0 (real OSM places only). **Orange warning** under `ORANGE` = 10 L: toast + HUD chip + orange gauge arc / FUEL lamp (red under 4 L). Test: `node tests/v046.mjs <folder>`. Pause menu indexes (0.7.0): Resume 0, Go fuel up 1, City map 2, Settings 3, Controls 4, Stats 5, Report a bug 6, Start over 7, End 8.
+
+- **0.7.0 (owner requests 2026-11-19)**: **City map** (`src/bigmap.js`, Pause > City map or the controller's **−** while driving; the shift
+  waits): the whole city, fuel stations (red pins), people waiting (green), the destination (yellow flag) and the GPS route (the ride, Go fuel
+  up, or else dashed to the nearest person waiting). Remote: arrows move, OK zooms x1 / 2 / 4 / 8 (then the whole city), Back closes;
+  controller: stick, R / L zoom, Y back on the taxi, − closes. Drawn only on a change. **Fuel stations = only the real OpenStreetMap ones**
+  (`tools/stations.mjs`, also used by build-city; run it after `npm run city` + `tools/fix-city.mjs`): each on the street sample nearest to
+  the real place, on its real side (`side` +1 left / -1 right, `x z` = the real place); 18 now, the 2 invented in 0.4.7 are gone; the farthest
+  town street is ~2.7 km from one (south-west: OSM has none there). **Road bot**: `node tools/roadbot.mjs <run> --patrol` then
+  `node tools/roadbot-after.mjs <run> bot_log/after`; committed `bot_log/before` + `bot_log/after` only. Detours are measured junction to
+  junction (`junctionRoute`); the 114 one-way streets that tools/fix-city.mjs had made two-way from the old wrong measure are one-way again
+  (docs/ROADBOT.md). A junction plaza's rim no longer rises over another street's asphalt (`city.js` `yRim`). Test: `node tests/v070.mjs <folder>`.
 
 ## Stage 2 (planned)
-Garage with upgrades that change the part's look (TV-safe layout), real fuel station places from OSM, turn-by-turn hints,
+Garage with upgrades that change the part's look (TV-safe layout), turn-by-turn hints,
 night shifts, remappable controls.

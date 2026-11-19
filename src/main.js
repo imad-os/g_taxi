@@ -65,6 +65,8 @@ function update(dt) {
         App.btnShown = App.input.btnSeen; const b = App.ui.root.querySelector('.btest b');
         if (b) b.textContent = I18n.t('btnSeen', App.input.lastBtn) + (MyPC.gamepad && MyPC.gamepad.label ? ' (' + MyPC.gamepad.label(App.input.lastBtn) + ')' : '');
     }
+    if (App.ui.screen === 'map') App.ui.mapTick(dt, App.input);
+    else if (App.state === 'drive' && App.input.edge.map && App.shift) { App.openMap(); return; }   // − : the city map
     if (App.state === 'drive' && App.shift) {
         App.shift.update(dt, App.input);
         App.hud.update(dt, App.input);
@@ -125,6 +127,8 @@ App.resetCareer = function () {
     if (App.shift) { const v = App.shift.me.veh; App.saved = { at: { x: Math.round(v.px), z: Math.round(v.pz) } }; App.shift.taxi.dirty = false; App.startShift(true); }
 };
 App.pauseShift = function () { if (App.state !== 'drive') return; App.state = 'pause'; App.bugMsg = null; App.sound.pause(); App.ui.pause(); };
+// the full city map (− while driving, or Pause > City map): the shift waits meanwhile, Back returns to the road
+App.openMap = function () { if (App.state !== 'drive') return; App.state = 'pause'; App.bugMsg = null; App.sound.pause(); App.ui.mapView(() => App.resumeShift()); };
 App.resumeShift = function () { App.ui.hide(); App.input.clearHeld(); App.input.prev.action = true; App.state = 'drive'; App.sound.resume(); };
 App.endShift = function () {
     save();

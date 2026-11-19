@@ -173,7 +173,7 @@ export class RoadBot {
             net.at(e, net.eLen[e] / 2, this.laneOffset(e, 1), a);
             this.recordDriven(null, null);
             v.setPose(a.x, a.y + v.cgY + 0.45, a.z, Math.atan2(a.fx, a.fz));
-            v.vx = v.vy = v.vz = 0;
+            v.vx = v.vy = v.vz = 0; this.settle = 1.5;
             net.query(a.x, a.z, e, this.S.qp);
             this.recordDriven(a.x, a.z);
             this.path = null; this.stuckT = 0; this.lostT = 0; this.trail.length = 0; this.lx = null;
@@ -207,6 +207,7 @@ export class RoadBot {
         this.recordDriven(null, null);
         v.setPose(x, q.y + v.cgY + 0.45, z, yaw);
         v.vx = v.vy = v.vz = 0;
+        this.settle = 1.5;            // the drop onto the road after a jump is not a bump in the road
         net.query(x, z, edge >= 0 ? edge : -1, S.qp);
         this.recordDriven(x, z);
         this.path = null; this.stuckT = 0; this.lostT = 0; this.trail.length = 0; this.lx = null;
@@ -229,7 +230,8 @@ export class RoadBot {
             if (q.edge >= 0 && Math.abs(q.d) > hw + 1.2 && q.junc < 0) { if ((this.offT += 0.25) >= 0.75) { this.note('offroad', v.px, v.py, v.pz, q.edge, (Math.abs(q.d) - hw).toFixed(1) + ' m off the asphalt'); this.offT = -3; } }
             else if (this.offT > 0) this.offT = 0; else this.offT = Math.min(0, this.offT + 0.25);
             // hard hits
-            if (comp > 0.3 || Math.abs(v.vy) > 3.2) this.note('bump', v.px, v.py, v.pz, q.edge, 'suspension ' + comp.toFixed(2) + ' m, vertical ' + v.vy.toFixed(1) + ' m/s');
+            if (this.settle > 0) this.settle -= 0.25;
+            else if (comp > 0.3 || Math.abs(v.vy) > 3.2) this.note('bump', v.px, v.py, v.pz, q.edge, 'suspension ' + comp.toFixed(2) + ' m, vertical ' + v.vy.toFixed(1) + ' m/s');
             // stuck
             if (sp < 1 && (v.input.throttle > 0.3 || this.back)) { if ((this.stuckT += 0.25) >= 4) { this.note('stuck', v.px, v.py, v.pz, q.edge, 'no progress for 4 s'); this.skip(15); } } else this.stuckT = 0;
             // lost
@@ -245,7 +247,7 @@ export class RoadBot {
         const h = Math.atan2(P.x[k + 1] - P.x[k], P.z[k + 1] - P.z[k]);
         net0(this.net, P.x[k], P.z[k], this.q);
         this.recordDriven(null, null);
-        v.setPose(P.x[k], this.q.y + v.cgY + 0.45, P.z[k], h); v.vx = v.vy = v.vz = 0;
+        v.setPose(P.x[k], this.q.y + v.cgY + 0.45, P.z[k], h); v.vx = v.vy = v.vz = 0; this.settle = 1.5;
         this.recordDriven(P.x[k], P.z[k]);
         this.k = k; this.stuckT = 0;
     }
@@ -540,11 +542,8 @@ export class RoadBot {
                 addPath('route_no_legal_exit_or_entry', { fromJunction: j0, toJunction: j1, fromEdge: e0, toEdge: e1, x: r2(net.jx[j0]), z: r2(net.jz[j0]), toX: r2(net.jx[j1]), toZ: r2(net.jz[j1]) });
                 continue;
             }
-            const dir0 = net.eA[e0] === j0 ? 1 : -1;
-            const s0 = dir0 > 0 ? Math.min(net.eLen[e0] * 0.25, 4) : Math.max(net.eLen[e0] * 0.75, net.eLen[e0] - 4);
-            const s1 = net.eLen[e1] / 2;
             routesTested++;
-            const r = net.route(e0, s0, dir0, e1, s1);
+            const r = this.junctionRoute(j0, j1);
             if (!r) {
                 addPath('route_failed', { fromJunction: j0, toJunction: j1, fromEdge: e0, toEdge: e1, x: r2(net.jx[j0]), z: r2(net.jz[j0]), toX: r2(net.jx[j1]), toZ: r2(net.jz[j1]) });
                 continue;
@@ -674,6 +673,25 @@ export class RoadBot {
         return true;
     }
 
+    // the shortest legal drive from junction j0 to junction j1: leaving by any street a car may take out of j0, arriving
+    // by any street a car may drive into j1 (2026-11-19: the old check left by the FIRST street out of j0 and stopped
+    // half way along the first street into j1, so a two-way street straight between them read as a 10x detour)
+    junctionRoute(j0, j1) {
+        const net = this.net;
+        let best = null;
+        for (const e0 of net.jEdges[j0]) {
+            if (!net.canLeave(e0, j0)) continue;
+            const dir0 = net.eA[e0] === j0 ? 1 : -1, s0 = dir0 > 0 ? Math.min(0.5, net.eLen[e0] / 2) : Math.max(net.eLen[e0] - 0.5, net.eLen[e0] / 2);
+            for (const e1 of net.jEdges[j1]) {
+                if (net.eOne[e1] && net.eB[e1] !== j1) continue;
+                const s1 = net.eB[e1] === j1 ? Math.max(net.eLen[e1] - 0.5, net.eLen[e1] / 2) : Math.min(0.5, net.eLen[e1] / 2);
+                if (e1 === e0 && (dir0 > 0 ? s1 < s0 : s1 > s0)) continue;
+                const r = net.route(e0, s0, dir0, e1, s1);
+                if (r && (!best || r.len < best.len)) best = r;
+            }
+        }
+        return best;
+    }
     isLocalDetour(j0, j1) {
         const net = this.net;
         // True when j0 and j1 are connected within 1-2 non-roundabout local edges (cls >= 2) undirectedly
@@ -697,9 +715,7 @@ export class RoadBot {
         };
         const e0 = edgeForJ(j0, true), e1 = edgeForJ(j1, false);
         if (e0 < 0 || e1 < 0) return true;
-        const dir0 = net.eA[e0] === j0 ? 1 : -1;
-        const s0 = dir0 > 0 ? Math.min(net.eLen[e0] * 0.25, 4) : Math.max(net.eLen[e0] * 0.75, net.eLen[e0] - 4);
-        const r = net.route(e0, s0, dir0, e1, net.eLen[e1] / 2);
+        const r = this.junctionRoute(j0, j1);
         const euclid = Math.hypot(net.jx[j1] - net.jx[j0], net.jz[j1] - net.jz[j0]);
         if (!r || (euclid > 15 && euclid < 120 && r.len > euclid * 10)) {
             const msg = r

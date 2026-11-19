@@ -734,7 +734,7 @@ for (const st of meta.stations) {
     const e = oldEdgeToNew.get(st.e);
     if (!e) continue;
     const safeK = e.pts.length >= 3 ? Math.max(1, Math.min(e.pts.length - 2, st.k)) : 0;
-    newStations.push({ e: e.id, k: safeK, side: st.side, name: st.name || '' });
+    newStations.push({ ...st, e: e.id, k: safeK, name: st.name || '' });
 }
 
 // 10. Write updated city.json, net.bin, side.bin, ground.bin

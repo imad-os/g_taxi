@@ -213,11 +213,17 @@ export class CityWorld {
         }
         // junction plazas: plain asphalt discs (3+ street hubs and angled 2-edge bends)
         for (const j of c.jn) {
-            const r = net.jr[j] + 0.4, y = net.jy[j] + 0.012, N = 18, P = net.jPlane[j];
+            // the 18-sided disc goes round the plaza circle (its corners outside, not its sides inside: a point the car
+            // drives on at the plaza's rim had no asphalt under it; road bot 2026-11-19, Place du Maroc)
+            const N = 18, r = (net.jr[j] + 0.4) / Math.cos(Math.PI / N), y = net.jy[j] + 0.012, P = net.jPlane[j];
             const yAt = (x, z) => P ? net.planeY(j, x, z) + 0.012 : y;   // the junction's own plane (the car drives on it)
+            // the rim: never above the asphalt of another street it reaches onto (that street's own height is what the car
+            // drives on there; road bot 2026-11-19: Boulevard Pasteur by Place de France had the plaza 17-23 cm over it)
+            const pq = this.pq || (this.pq = {});
+            const yRim = (x, z) => { const h = yAt(x, z); net.query(x, z, -1, pq); return pq.edge >= 0 && pq.off === 0 && pq.junc !== j && pq.y + 0.012 < h ? pq.y + 0.012 : h; };
             const base = road.count;
             road.vert(net.jx[j], yAt(net.jx[j], net.jz[j]), net.jz[j], 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1);
-            for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2, vx = net.jx[j] + Math.cos(t) * r, vz = net.jz[j] + Math.sin(t) * r; road.vert(vx, yAt(vx, vz), vz, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
+            for (let a = 0; a <= N; a++) { const t = a / N * Math.PI * 2, vx = net.jx[j] + Math.cos(t) * r, vz = net.jz[j] + Math.sin(t) * r; road.vert(vx, yRim(vx, vz), vz, 0, 1, 0, 0, 0, 0); DS.push(0, 0, 99, 1); }
             for (let a = 0; a < N; a++) road.i.push(base, base + 2 + a, base + 1 + a);
         }
         const gq = this.gq || (this.gq = {});
@@ -405,18 +411,19 @@ export class CityWorld {
     station(core, detail, s) {
         const net = this.net, e = s.e, i = net.eOff[e] + s.k;
         const x = net.px[i], y = net.py[i] + 0.15, z = net.pz[i], fx = net.tx[i], fz = net.tz[i], lx = fz, lz = -fx, hw = net.eHw[e];
-        const dC = -(hw + PAVE * 0.35);                    // canopy centre: over the pavement and the right lane
+        const sg = s.side > 0 ? 1 : -1;                   // the side of the street the real station is on (-1 = right)
+        const dC = sg * (hw + PAVE * 0.35);                // canopy centre: over the pavement and the nearest lane
         const cx = x + lx * dC, cz = z + lz * dC;
         core.box(cx, y + 4.6, cz, 8, 0.6, (PAVE + 3.5) / 2, fx, fz, 236, 236, 232);          // roof
         core.box(cx, y + 4.55, cz, 8.05, 0.12, (PAVE + 3.5) / 2 + 0.05, fx, fz, 20, 150, 90);  // green band
         for (const u of [-6, 6]) {
-            const px = x + lx * -(hw + PAVE - 0.4) + fx * u, pz = z + lz * -(hw + PAVE - 0.4) + fz * u;
+            const px = x + lx * sg * (hw + PAVE - 0.4) + fx * u, pz = z + lz * sg * (hw + PAVE - 0.4) + fz * u;
             core.box(px, y, pz, 0.2, 4.6, 0.2, fx, fz, 210, 210, 206);
-            const qx = x + lx * -(hw + 1.6) + fx * u * 0.6, qz = z + lz * -(hw + 1.6) + fz * u * 0.6;
+            const qx = x + lx * sg * (hw + 1.6) + fx * u * 0.6, qz = z + lz * sg * (hw + 1.6) + fz * u * 0.6;
             core.box(qx, y, qz, 0.5, 1.7, 0.3, fx, fz, 30, 160, 95);        // pump
             core.box(qx, y + 1.2, qz, 0.52, 0.35, 0.32, fx, fz, 250, 250, 250, true);
         }
-        const sx = x + lx * -(hw + PAVE + 1.5) + fx * 11, sz = z + lz * -(hw + PAVE + 1.5) + fz * 11;
+        const sx = x + lx * sg * (hw + PAVE + 1.5) + fx * 11, sz = z + lz * sg * (hw + PAVE + 1.5) + fz * 11;
         core.box(sx, y, sz, 0.18, 7, 0.18, fx, fz, 180, 180, 180);
         core.box(sx, y + 5.2, sz, 0.15, 2.2, 1.3, fx, fz, 20, 150, 90);
         core.box(sx, y + 6.0, sz, 0.17, 0.8, 1.0, fx, fz, 255, 210, 40, true);
